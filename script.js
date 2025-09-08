@@ -1,30 +1,24 @@
-document.addEventListener("DOMContentLoaded", function () {
-  const now = new Date();
-  const hour = now.getHours();
-  const greetingElement = document.getElementById("greeting");
-  const imageElement = document.getElementById("greeting-image");
-  const body = document.body;
+function calcularIMC() {
+    var peso = parseFloat(document.getElementById("peso").value);
+    var altura = parseFloat(document.getElementById("altura").value);
 
-  let greetingText = "";
-  let imageUrl = "";
-  let timeClass = "";
+    if (isNaN(peso) || isNaN(altura) || altura <= 0) {
+        alert("Por favor, insira valores válidos para peso e altura.");
+        return;
+    }
+    var imc = peso / (altura * altura);
+    var classificacao = "";
 
-  if (hour >= 6 && hour < 12) {
-    greetingText = "Bom dia!";
-    imageUrl = "Imagens/manhã.png";
-    timeClass = "morning";
-  } else if (hour >= 12 && hour < 18) {
-    greetingText = "Boa tarde!";
-    imageUrl = "Imagens/tarde.png";
-    timeClass = "afternoon";
-  } else {
-    greetingText = "Boa noite!";
-    imageUrl = "Imagens/noite.png";
-    timeClass = "night";
-  }
+    if (imc < 18.5) {
+        classificacao = "Abaixo do peso";
+    } else if (imc < 25) {
+        classificacao = "Peso normal";
+    } else if (imc < 30) {
+        classificacao = "Sobrepeso";
+    } else {
+        classificacao = "Obesidade";
+    }
 
-  greetingElement.textContent = greetingText;
-  imageElement.src = imageUrl;
-  imageElement.alt = greetingText;
-  body.classList.add(timeClass);
-});
+    window.alert("Seu IMC é: " + imc.toFixed(2));
+    window.alert("Seu resultado é: " + classificacao);
+}
