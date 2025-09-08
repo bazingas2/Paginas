@@ -247,6 +247,36 @@
     scene.add(car);
 
     // ==============================
+// Buzina 🚗🔊
+// ==============================
+let audioCtx = null;
+
+function playHorn() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+  const oscillator = audioCtx.createOscillator();
+  const gainNode = audioCtx.createGain();
+
+  oscillator.type = "square"; // som metálico
+  oscillator.frequency.setValueAtTime(440, audioCtx.currentTime); // tom base
+  gainNode.gain.setValueAtTime(0.2, audioCtx.currentTime);
+
+  oscillator.connect(gainNode);
+  gainNode.connect(audioCtx.destination);
+
+  oscillator.start();
+  oscillator.stop(audioCtx.currentTime + 0.3); // buzina curta
+}
+
+// Controle da buzina (tecla espaço)
+document.addEventListener("keydown", e => {
+  if (e.code === "Space") {
+    playHorn();
+  }
+});
+
+
+    // ==============================
     // NPC Cars
     // ==============================
     let obstacles = [];
@@ -421,3 +451,4 @@
   </script>
 </body>
 </html>
+
