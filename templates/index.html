@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cardápio - Lanchonete Escolar</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <h1>Cardápio da Lanchonete</h1>
+    <form action="{{ url_for('pedido') }}" method="POST">
+        <ul>
+            {% for id, item in cardapio.items() %}
+            <li>
+                <label>
+                    <input type="radio" name="lanche_id" value="{{ id }}" required>
+                    {{ item.nome }} - R$ {{ "%.2f"|format(item.preco) }}
+                </label>
+            </li>
+            {% endfor %}
+        </ul>
+        <label for="quantidade">Quantidade:</label>
+        <input type="number" name="quantidade" id="quantidade" min="1" value="1" required>
+        <button type="submit">Fazer Pedido</button>
+    </form>
+</body>
+</html>

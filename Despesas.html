@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <label for="Salario">Salario</label>
+    <input type="number" id="Salario">
+    <br><br>
+    <label for="Despesas1">Despesas 1</label>
+    <input type="number" id="Despesas1">
+    <br><br>
+    <label for="Despesas2">Despesas 2</label>
+    <input type="number" id="Despesas2">
+    <br><br>
+    <label for="Despesas3">Despesas 3</label>
+    <input type="number" id="Despesas3">
+    <br><br>
+    <button onclick="calcularSaldo()">Calcular Saldo</button>
+    <p id="resultado"></p>
+
+    <script>
+function calcularSaldo() {
+    const salario = parseFloat(Salario.value);
+    const despesas1 = parseFloat(Despesas1.value) || 0;
+    const despesas2 = parseFloat(Despesas2.value) || 0;
+    const despesas3 = parseFloat(Despesas3.value) || 0;
+
+    const totalDespesas = despesas1 + despesas2 + despesas3;
+    const percentualDespesas1 = (despesas1 / salario) * 100;
+    const percentualDespesas2 = (despesas2 / salario) * 100;
+    const percentualDespesas3 = (despesas3 / salario) * 100;
+
+    resultado.textContent = `
+        Saldo: R$ ${(salario - totalDespesas).toFixed(2)}
+        | Total de Despesas: ${(totalDespesas / salario * 100).toFixed(2)}%
+        | Despesa 1: ${percentualDespesas1.toFixed(2)}%
+        | Despesa 2: ${percentualDespesas2.toFixed(2)}%
+        | Despesa 3: ${percentualDespesas3.toFixed(2)}%
+    `;
+}
+
+
+    </script>
+</body>
+</html> 

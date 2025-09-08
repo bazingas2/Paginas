@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pedido Confirmado</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <h1>Pedido Confirmado!</h1>
+    <p>Você pediu {{ quantidade }}x {{ lanche.nome }}.</p>
+    <p>Total: R$ {{ "%.2f"|format(total) }}</p>
+    <a href="{{ url_for('index') }}">Voltar ao Cardápio</a>
+</body>
+</html>

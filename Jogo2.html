@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <title>Corrida dos Carrinhos 🚗💨</title>
+  <style>
+    body {
+      margin: 0;
+      background: #111;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      font-family: Arial, sans-serif;
+    }
+    canvas {
+      border: 3px solid #000;
+      border-radius: 10px;
+      background: #228B22; /* grama */
+      display: block;
+    }
+    #menu {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.85);
+      color: white;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+      gap: 20px;
+    }
+    button {
+      padding: 12px 25px;
+      font-size: 18px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      background: #ff4444;
+      color: white;
+      font-weight: bold;
+    }
+    button:hover {
+      background: #ff2222;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="gameCanvas" width="500" height="700"></canvas>
+  <div id="menu">
+    <h1>🚗 Corrida dos Carrinhos</h1>
+    <button id="startBtn">Jogar</button>
+  </div>
+
+  <script>
+    const canvas = document.getElementById("gameCanvas");
+    const ctx = canvas.getContext("2d");
+    const menu = document.getElementById("menu");
+    const startBtn = document.getElementById("startBtn");
+
+    const largura = canvas.width;
+    const altura = canvas.height;
+
+    // Carro jogador
+    const carro = {
+      x: largura / 2 - 25,
+      y: altura - 120,
+      w: 50,
+      h: 90,
+      vel: 6
+    };
+
+    // Carrinhos inimigos
+    let inimigos = [];
+    const inimigoW = 50;
+    const inimigoH = 90;
+    const velInimigo = 6;
+    let tempoSpawn = 0;
+
+    // Pista
+    let linhaPista = 0;
+    const velPista = 5;
+
+    // Estados
+    let gameOver = false;
+    let jogando = false;
+    let score = 0;
+
+    // Controles
+    const teclas = {};
+    document.addEventListener("keydown", e => teclas[e.key] = true);
+    document.addEventListener("keyup", e => teclas[e.key] = false);
+
+    // --- Desenho dos carrinhos ---
+    function desenharCarro(x, y, w, h, cor) {
+      ctx.fillStyle = cor;
+      ctx.fillRect(x, y, w, h); // corpo
+
+      // para-brisa
+      ctx.fillStyle = "white";
+      ctx.fillRect(x + 8, y + 10, w - 16, 20);
+
+      // janelas
+      ctx.fillStyle = "lightgray";
+      ctx.fillRect(x + 8, y + 35, w - 16, 20);
+
+      // rodas
+      ctx.fillStyle = "black";
+      ctx.fillRect(x - 6, y + 5, 8, 25);  // frente esquerda
+      ctx.fillRect(x + w - 2, y + 5, 8, 25); // frente direita
+      ctx.fillRect(x - 6, y + h - 30, 8, 25); // trás esquerda
+      ctx.fillRect(x + w - 2, y + h - 30, 8, 25); // trás direita
+    }
+
+    function desenharPista() {
+      // fundo (grama)
+      ctx.fillStyle = "#228B22";
+      ctx.fillRect(0, 0, largura, altura);
+
+      // pista
+      ctx.fillStyle = "#444";
+      ctx.fillRect(100, 0, 300, altura);
+
+      // bordas
+      ctx.fillStyle = "#8B4513";
+      ctx.fillRect(95, 0, 10, altura);
+      ctx.fillRect(395, 0, 10, altura);
+
+      // linhas do meio
+      ctx.fillStyle = "white";
+      for (let i = -20; i < altura; i += 60) {
+        ctx.fillRect(245, i + linhaPista, 10, 40);
+      }
+      linhaPista += velPista;
+      if (linhaPista >= 60) linhaPista = 0;
+    }
+
+    function criarInimigo() {
+      const x = Math.floor(Math.random() * (320 - 120)) + 120;
+      inimigos.push({ x, y: -inimigoH, w: inimigoW, h: inimigoH });
+    }
+
+    function moverInimigos() {
+      inimigos.forEach(carro => carro.y += velInimigo);
+      inimigos = inimigos.filter(carro => carro.y < altura);
+    }
+
+    function verificarColisao() {
+      for (let inimigo of inimigos) {
+        if (carro.x < inimigo.x + inimigo.w &&
+            carro.x + carro.w > inimigo.x &&
+            carro.y < inimigo.y + inimigo.h &&
+            carro.y + carro.h > inimigo.y) {
+          return true;
+        }
+      }
+      return false;
+    }
+
+    function atualizar() {
+      if (!jogando || gameOver) return;
+
+      // mover carro
+      if (teclas["ArrowLeft"] && carro.x > 120) carro.x -= carro.vel;
+      if (teclas["ArrowRight"] && carro.x < 330) carro.x += carro.vel;
+
+      // spawn inimigos
+      tempoSpawn++;
+      if (tempoSpawn > 80) {
+        criarInimigo();
+        tempoSpawn = 0;
+      }
+
+      moverInimigos();
+
+      if (verificarColisao()) {
+        gameOver = true;
+      }
+
+      // pontuação
+      score++;
+    }
+
+    function desenhar() {
+      desenharPista();
+
+      // desenhar jogador
+      desenharCarro(carro.x, carro.y, carro.w, carro.h, "red");
+
+      // desenhar inimigos
+      inimigos.forEach(c => {
+        desenharCarro(c.x, c.y, c.w, c.h, "blue");
+      });
+
+      // pontuação
+      if (jogando && !gameOver) {
+        ctx.fillStyle = "white";
+        ctx.font = "bold 24px Arial";
+        ctx.fillText("Pontuação: " + score, 20, 40);
+      }
+
+      if (gameOver) {
+        ctx.fillStyle = "red";
+        ctx.font = "bold 50px Arial";
+        ctx.fillText("GAME OVER", largura / 2 - 150, altura / 2);
+        ctx.font = "bold 30px Arial";
+        ctx.fillStyle = "yellow";
+        ctx.fillText("Pontuação: " + score, largura / 2 - 90, altura / 2 + 50);
+
+        ctx.fillStyle = "white";
+        ctx.font = "20px Arial";
+        ctx.fillText("Pressione ENTER para reiniciar", largura / 2 - 160, altura / 2 + 100);
+      }
+    }
+
+    function loop() {
+      atualizar();
+      desenhar();
+      requestAnimationFrame(loop);
+    }
+
+    document.addEventListener("keydown", e => {
+      if (gameOver && e.key === "Enter") {
+        resetarJogo();
+      }
+    });
+
+    function resetarJogo() {
+      carro.x = largura / 2 - 25;
+      carro.y = altura - 120;
+      inimigos = [];
+      score = 0;
+      gameOver = false;
+      jogando = true;
+    }
+
+    startBtn.addEventListener("click", () => {
+      menu.style.display = "none";
+      resetarJogo();
+    });
+
+    loop();
+  </script>
+</body>
+</html>
