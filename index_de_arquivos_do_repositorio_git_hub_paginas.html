@@ -1,0 +1,325 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Índice de Arquivos — bazingas2/Paginas</title>
+  <style>
+    :root {
+      --bg: #0b1020;
+      --panel: #121933;
+      --text: #eef2ff;
+      --muted: #91a1ff;
+      --accent: #6ea8fe;
+      --chip: #1a2347;
+      --border: #223062;
+    }
+    html, body { height: 100%; }
+    body { margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji"; background: linear-gradient(180deg, var(--bg), #0b1430); color: var(--text); }
+
+    header { position: sticky; top: 0; z-index: 5; backdrop-filter: blur(8px); background: linear-gradient(180deg, rgba(18,25,51,.9), rgba(18,25,51,.7)); border-bottom: 1px solid var(--border); }
+    .wrap { max-width: 1100px; margin: 0 auto; padding: 20px; }
+
+    h1 { margin: 0; font-size: 1.4rem; letter-spacing: .2px; display: flex; align-items: center; gap: .6rem; }
+    h1 small { opacity: .7; font-weight: 500; }
+
+    .controls { display: grid; grid-template-columns: 1fr auto; gap: 10px; margin-top: 12px; align-items: center; }
+    .search { display: flex; align-items: center; gap: 8px; background: var(--chip); border: 1px solid var(--border); padding: 10px 12px; border-radius: 12px; }
+    .search input { flex: 1; background: transparent; border: 0; outline: 0; color: var(--text); font-size: 0.95rem; }
+    .btn { background: var(--accent); color: #0b1020; border: 0; padding: 10px 14px; border-radius: 12px; font-weight: 700; cursor: pointer; box-shadow: 0 6px 20px rgba(110,168,254,.25); }
+    .btn:disabled{ opacity:.5; cursor:not-allowed }
+
+    .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+    .chip { display: inline-flex; align-items: center; gap: 6px; padding: 6px 10px; border-radius: 999px; background: var(--chip); border: 1px solid var(--border); font-size: .9rem; }
+    .chip input { accent-color: var(--accent); }
+
+    main .wrap { display: grid; grid-template-columns: 1fr; gap: 14px; }
+
+    .card { background: var(--panel); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; }
+    .card header { position: relative; background: transparent; border: 0; }
+    .card .content { padding: 14px 20px 20px; }
+
+    details.dir { border: 1px solid var(--border); border-radius: 12px; padding: 10px 12px; background: #0f1733; }
+    details.dir > summary { cursor: pointer; font-weight: 700; list-style: none; }
+    details.dir > summary::marker { display: none; }
+    details.dir > summary::-webkit-details-marker { display: none; }
+
+    ul.files { list-style: none; padding-left: 0; margin: 8px 0 0; }
+    ul.files li { display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: center; padding: 6px 8px; border-bottom: 1px dashed rgba(255,255,255,.06); }
+    ul.files li:last-child { border-bottom: 0; }
+    .path { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; font-size: .95rem; }
+    .badges { display: inline-flex; gap: 6px; align-items: center; }
+    .badge { font-size: .75rem; padding: 3px 8px; border-radius: 999px; background: #0e1a3e; border: 1px solid var(--border); color: var(--muted); }
+
+    .row-actions { display: inline-flex; gap: 6px; }
+    .row-actions a { text-decoration: none; font-size: .85rem; padding: 6px 10px; border-radius: 10px; border: 1px solid var(--border); background: #0d1a39; color: var(--text); }
+    .row-actions a:hover{ background:#10204a }
+
+    footer.wrap { opacity: .7; font-size: .9rem; }
+    .hidden { display: none !important; }
+
+    @media (min-width: 900px) {
+      main .wrap { grid-template-columns: 1fr 320px; }
+      .sticky-col { position: sticky; top: 92px; align-self: start; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap">
+      <h1>
+        📁 Índice de Arquivos
+        <small>GitHub → <code id="repoLabel">bazingas2/Paginas</code></small>
+      </h1>
+      <div class="controls">
+        <div class="search" role="search">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M21 21l-4.3-4.3M10.5 18a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15Z" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          <input id="q" type="search" placeholder="Filtrar por nome, extensão… (ex: .html, jogo, pasta/static)" />
+        </div>
+        <button id="reload" class="btn">Atualizar</button>
+      </div>
+      <div class="chips" aria-label="Filtros de tipo">
+        <label class="chip"><input type="checkbox" data-ext=".html" checked> .html</label>
+        <label class="chip"><input type="checkbox" data-ext=".js" checked> .js</label>
+        <label class="chip"><input type="checkbox" data-ext=".py" checked> .py</label>
+        <label class="chip"><input type="checkbox" data-ext=".css" checked> .css</label>
+        <label class="chip"><input type="checkbox" data-ext=".pdf" checked> .pdf</label>
+        <label class="chip"><input type="checkbox" data-ext=".png,.jpg,.jpeg,.gif,.jfif" checked> imagens</label>
+        <label class="chip"><input type="checkbox" data-ext=".mp3,.wav,.ogg" checked> áudio</label>
+        <label class="chip"><input type="checkbox" data-ext="other" checked> outros</label>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <div class="wrap">
+      <section class="card">
+        <header class="wrap">
+          <strong>Arquivos</strong>
+        </header>
+        <div class="content">
+          <div id="tree"></div>
+        </div>
+      </section>
+
+      <aside class="sticky-col">
+        <section class="card">
+          <div class="content">
+            <h3>Como abrir</h3>
+            <p>
+              • <b>Abrir RAW</b> → link direto (download_url).<br/>
+              • <b>Ver no GitHub</b> → página do arquivo no repositório.<br/>
+              • <b>GitHub Pages</b> (somente .html) → <code>https://USUARIO.github.io/REPO/caminho</code>.
+            </p>
+            <p style="opacity:.8">Dica: publique este arquivo como <code>index.html</code> na branch <code>main</code> e ative o GitHub Pages para ter um índice navegável.</p>
+          </div>
+        </section>
+      </aside>
+    </div>
+  </main>
+
+  <footer class="wrap">
+    Feito com ❤️ usando a API pública do GitHub. Nenhum backend necessário.
+  </footer>
+
+  <script>
+    // ====== CONFIGURE AQUI SE PRECISAR ======
+    const OWNER = 'bazingas2';
+    const REPO  = 'Paginas';
+    const BRANCH = 'main'; // ajuste se usar outra branch
+    // ========================================
+
+    const repoLabel = document.getElementById('repoLabel');
+    repoLabel.textContent = `${OWNER}/${REPO}`;
+
+    const qs = (s, el=document) => el.querySelector(s);
+    const qsa = (s, el=document) => Array.from(el.querySelectorAll(s));
+
+    const state = {
+      flat: [], // todos os itens (arquivos) em uma lista
+      tree: {},
+      filters: {
+        exts: new Set(['.html','.js','.py','.css','.pdf','img','audio','other']),
+        query: ''
+      }
+    };
+
+    function extOf(path) {
+      const m = path.toLowerCase().match(/\.([^.\/]+)$/);
+      return m ? `.${m[1]}` : '';
+    }
+
+    function classify(path) {
+      const e = extOf(path);
+      if(['.png','.jpg','.jpeg','.gif','.jfif','.webp','.svg'].includes(e)) return 'img';
+      if(['.mp3','.wav','.ogg','.m4a'].includes(e)) return 'audio';
+      if(['.html','.js','.py','.css','.pdf'].includes(e)) return e;
+      return 'other';
+    }
+
+    function keepByExt(kind) {
+      return state.filters.exts.has(kind);
+    }
+
+    function matchesQuery(path) {
+      const q = state.filters.query.trim().toLowerCase();
+      if(!q) return true;
+      return path.toLowerCase().includes(q);
+    }
+
+    function toggleExtsFromUI(){
+      state.filters.exts.clear();
+      qsa('.chip input').forEach(el => {
+        if(el.checked){
+          const val = el.getAttribute('data-ext');
+          if(val.includes(',')) val.split(',').forEach(v => {
+            if(['.png','.jpg','.jpeg','.gif','.jfif'].includes(v)) state.filters.exts.add('img');
+            else if(['.mp3','.wav','.ogg'].includes(v)) state.filters.exts.add('audio');
+            else state.filters.exts.add(v);
+          });
+          else state.filters.exts.add(val);
+        }
+      });
+      render();
+    }
+
+    qsa('.chip input').forEach(ch => ch.addEventListener('change', toggleExtsFromUI));
+
+    qs('#q').addEventListener('input', (e)=>{
+      state.filters.query = e.target.value;
+      render();
+    });
+
+    qs('#reload').addEventListener('click', ()=> loadRepo());
+
+    async function gh(path=''){
+      const url = `https://api.github.com/repos/${OWNER}/${REPO}/contents/${path}?ref=${encodeURIComponent(BRANCH)}`;
+      const res = await fetch(url);
+      if(!res.ok) throw new Error('Falha ao carregar: '+url);
+      return res.json();
+    }
+
+    async function crawl(dir=''){
+      const items = await gh(dir);
+      const out = [];
+      for(const it of items){
+        if(it.type === 'file'){
+          out.push({
+            path: it.path,
+            name: it.name,
+            sha: it.sha,
+            size: it.size,
+            download_url: it.download_url,
+            html_url: it.html_url,
+            kind: classify(it.path)
+          });
+        } else if(it.type === 'dir'){
+          const children = await crawl(it.path);
+          out.push(...children);
+        }
+      }
+      return out;
+    }
+
+    function buildTree(files){
+      const root = {};
+      for(const f of files){
+        const parts = f.path.split('/');
+        let cur = root;
+        for(let i=0;i<parts.length;i++){
+          const part = parts[i];
+          if(i === parts.length - 1){
+            (cur.__files ||= []).push(f);
+          } else {
+            cur[part] ||= {};
+            cur = cur[part];
+          }
+        }
+      }
+      return root;
+    }
+
+    function ghPagesUrl(path){
+      return `https://${OWNER}.github.io/${REPO}/${path}`;
+    }
+
+    function renderDir(obj, basePath=''){
+      const frag = document.createDocumentFragment();
+      const entries = Object.entries(obj).filter(([k])=>k !== '__files').sort(([a],[b])=>a.localeCompare(b));
+
+      for(const [dirName, child] of entries){
+        const details = document.createElement('details');
+        details.className = 'dir';
+        details.open = basePath === '';
+        const summary = document.createElement('summary');
+        summary.textContent = (basePath ? basePath+'/' : '') + dirName;
+        details.appendChild(summary);
+        details.appendChild(renderDir(child, (basePath? basePath+'/':'')+dirName));
+        frag.appendChild(details);
+      }
+
+      const files = (obj.__files || [])
+        .filter(f => keepByExt(f.kind))
+        .filter(f => matchesQuery(f.path))
+        .sort((a,b)=> a.path.localeCompare(b.path));
+
+      if(files.length){
+        const ul = document.createElement('ul');
+        ul.className = 'files';
+        for(const f of files){
+          const li = document.createElement('li');
+          const left = document.createElement('div');
+          const right = document.createElement('div');
+          right.className = 'row-actions';
+
+          left.innerHTML = `<span class="path">${f.path}</span> `;
+          const badges = document.createElement('span');
+          badges.className = 'badges';
+          const b1 = document.createElement('span'); b1.className='badge'; b1.textContent = f.kind === 'img' ? 'imagem' : (f.kind === 'audio' ? 'áudio' : (f.kind.startsWith('.') ? f.kind : 'outro'));
+          const b2 = document.createElement('span'); b2.className='badge'; b2.textContent = (f.size/1024).toFixed(1)+' KB';
+          badges.appendChild(b1); badges.appendChild(b2);
+          left.appendChild(badges);
+
+          const aRaw = document.createElement('a'); aRaw.href = f.download_url; aRaw.target = '_blank'; aRaw.rel='noopener'; aRaw.textContent = 'Abrir RAW';
+          const aHub = document.createElement('a'); aHub.href = f.html_url; aHub.target = '_blank'; aHub.rel='noopener'; aHub.textContent = 'Ver no GitHub';
+          right.append(aRaw, aHub);
+
+          if(f.kind === '.html'){
+            const aPages = document.createElement('a'); aPages.href = ghPagesUrl(f.path); aPages.target='_blank'; aPages.rel='noopener'; aPages.textContent = 'GitHub Pages';
+            right.appendChild(aPages);
+          }
+
+          li.append(left, right);
+          ul.appendChild(li);
+        }
+        frag.appendChild(ul);
+      }
+
+      return frag;
+    }
+
+    function render(){
+      const host = document.getElementById('tree');
+      host.innerHTML = '';
+      host.appendChild(renderDir(state.tree));
+    }
+
+    async function loadRepo(){
+      const btn = qs('#reload');
+      btn.disabled = true; btn.textContent = 'Carregando…';
+      try {
+        state.flat = await crawl('');
+        state.tree = buildTree(state.flat);
+        render();
+      } catch (e){
+        alert(e.message);
+      } finally {
+        btn.disabled = false; btn.textContent = 'Atualizar';
+      }
+    }
+
+    // Inicializa
+    loadRepo();
+  </script>
+</body>
+</html>
