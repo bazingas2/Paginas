@@ -60,6 +60,9 @@
     <div id="scoreHistory"></div>
   </div>
 
+  <audio id="carHorn" src="buzina.mp3" preload="auto"></audio>
+
+
   <script src="https://cdn.jsdelivr.net/npm/three@0.157.0/build/three.min.js"></script>
   <script>
     let scoreHistory = [];
@@ -246,32 +249,15 @@
     car.position.set(0, 0, 5);
     scene.add(car);
 
-    // ==============================
-// Buzina 🚗🔊
+  // ==============================
+// Buzina com MP3 🚗🔊
 // ==============================
-let audioCtx = null;
+const horn = document.getElementById("carHorn");
 
-function playHorn() {
-  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-
-  const oscillator = audioCtx.createOscillator();
-  const gainNode = audioCtx.createGain();
-
-  oscillator.type = "square"; // som metálico
-  oscillator.frequency.setValueAtTime(440, audioCtx.currentTime); // tom base
-  gainNode.gain.setValueAtTime(0.2, audioCtx.currentTime);
-
-  oscillator.connect(gainNode);
-  gainNode.connect(audioCtx.destination);
-
-  oscillator.start();
-  oscillator.stop(audioCtx.currentTime + 0.3); // buzina curta
-}
-
-// Controle da buzina (tecla espaço)
 document.addEventListener("keydown", e => {
   if (e.code === "Space") {
-    playHorn();
+    horn.currentTime = 0; // reinicia o som se já estiver tocando
+    horn.play();
   }
 });
 
@@ -451,4 +437,5 @@ document.addEventListener("keydown", e => {
   </script>
 </body>
 </html>
+
 
