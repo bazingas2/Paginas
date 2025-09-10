@@ -64,6 +64,13 @@
     const largura = canvas.width;
     const altura = canvas.height;
 
+    // Sons
+    const somFundo = new Audio("1.mp3");  // Som de fundo
+    const somGameOver = new Audio("2.mp3");  // Som de Game Over
+
+    somFundo.loop = true;  // O som de fundo irá repetir
+    somFundo.volume = 0.3;  // Ajuste o volume, se necessário
+
     // Carro jogador
     const carro = {
       x: largura / 2 - 25,
@@ -178,6 +185,7 @@
 
       if (verificarColisao()) {
         gameOver = true;
+        somGameOver.play();  // Toca o som de Game Over quando o jogo acaba
       }
 
       // pontuação
@@ -235,10 +243,12 @@
       score = 0;
       gameOver = false;
       jogando = true;
+      somFundo.play();  // Recomeça o som de fundo quando o jogo começa
     }
 
     startBtn.addEventListener("click", () => {
       menu.style.display = "none";
+      somFundo.play();  // Inicia o som de fundo quando o jogo começa
       resetarJogo();
     });
 
