@@ -87,6 +87,8 @@
         <label class="chip"><input type="checkbox" data-ext=".png,.jpg,.jpeg,.gif,.jfif" checked> imagens</label>
         <label class="chip"><input type="checkbox" data-ext=".mp3,.wav,.ogg" checked> áudio</label>
         <label class="chip"><input type="checkbox" data-ext="other" checked> outros</label>
+        <!-- filtro snack -->
+        <label class="chip"><input type="checkbox" data-ext="snack" checked> snacks</label>
       </div>
     </div>
   </header>
@@ -139,7 +141,7 @@
       flat: [], // todos os itens (arquivos) em uma lista
       tree: {},
       filters: {
-        exts: new Set(['.html','.js','.py','.css','.pdf','img','audio','other']),
+        exts: new Set(['.html','.js','.py','.css','.pdf','img','audio','other','snack']),
         query: ''
       }
     };
@@ -275,8 +277,16 @@
           left.innerHTML = `<span class="path">${f.path}</span> `;
           const badges = document.createElement('span');
           badges.className = 'badges';
-          const b1 = document.createElement('span'); b1.className='badge'; b1.textContent = f.kind === 'img' ? 'imagem' : (f.kind === 'audio' ? 'áudio' : (f.kind.startsWith('.') ? f.kind : 'outro'));
-          const b2 = document.createElement('span'); b2.className='badge'; b2.textContent = (f.size/1024).toFixed(1)+' KB';
+          const b1 = document.createElement('span'); 
+          b1.className='badge'; 
+          b1.textContent = 
+            f.kind === 'img' ? 'imagem' : 
+            (f.kind === 'audio' ? 'áudio' : 
+            (f.kind === 'snack' ? 'snack' : 
+            (f.kind.startsWith('.') ? f.kind : 'outro')));
+          const b2 = document.createElement('span'); 
+          b2.className='badge'; 
+          b2.textContent = f.size ? (f.size/1024).toFixed(1)+' KB' : '--';
           badges.appendChild(b1); badges.appendChild(b2);
           left.appendChild(badges);
 
@@ -309,6 +319,16 @@
       btn.disabled = true; btn.textContent = 'Carregando…';
       try {
         state.flat = await crawl('');
+
+        // adiciona manualmente os links externos snack
+        const snackLinks = [
+          { path: "snack/b46abe", name: "Snack 1", size: 0, download_url: "https://snack.expo.dev/@kawanf/b46abe", html_url: "https://snack.expo.dev/@kawanf/b46abe", kind: "snack" },
+          { path: "snack/e1bce5", name: "Snack 2", size: 0, download_url: "https://snack.expo.dev/@kawanf/e1bce5", html_url: "https://snack.expo.dev/@kawanf/e1bce5", kind: "snack" },
+          { path: "snack/c2d492", name: "Snack 3", size: 0, download_url: "https://snack.expo.dev/@kawanf/c2d492", html_url: "https://snack.expo.dev/@kawanf/c2d492", kind: "snack" },
+          { path: "snack/54c8a7", name: "Snack 4", size: 0, download_url: "https://snack.expo.dev/@kawanf/54c8a7", html_url: "https://snack.expo.dev/@kawanf/54c8a7", kind: "snack" },
+        ];
+        state.flat.push(...snackLinks);
+
         state.tree = buildTree(state.flat);
         render();
       } catch (e){
@@ -322,4 +342,3 @@
     loadRepo();
   </script>
 </body>
-</html>
