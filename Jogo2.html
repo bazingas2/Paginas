@@ -25,13 +25,19 @@
       left: 0;
       width: 100%;
       height: 100%;
-      background: rgba(0,0,0,0.85);
+      background: url("BCO.4355584f-850c-435a-82ff-f0692d5806cf.png") no-repeat center center;
+      background-size: cover;
       color: white;
       display: flex;
       justify-content: center;
       align-items: center;
       flex-direction: column;
       gap: 20px;
+    }
+    #menu h1 {
+      background: rgba(0,0,0,0.6);
+      padding: 10px 20px;
+      border-radius: 10px;
     }
     button {
       padding: 12px 25px;
@@ -65,11 +71,12 @@
     const altura = canvas.height;
 
     // Sons
-    const somFundo = new Audio("1.mp3");  // Som de fundo
-    const somGameOver = new Audio("2.mp3");  // Som de Game Over
+    const somFundo = new Audio("1.mp3");   // música de fundo
+    const somGameOver = new Audio("2.mp3"); // som de game over
+    const somBuzina = new Audio("zap.mp3"); // buzina
 
-    somFundo.loop = true;  // O som de fundo irá repetir
-    somFundo.volume = 0.3;  // Ajuste o volume, se necessário
+    somFundo.loop = true;
+    somFundo.volume = 0.3;
 
     // Carro jogador
     const carro = {
@@ -98,45 +105,46 @@
 
     // Controles
     const teclas = {};
-    document.addEventListener("keydown", e => teclas[e.key] = true);
+    document.addEventListener("keydown", e => {
+      teclas[e.key] = true;
+
+      // buzina no espaço
+      if (e.code === "Space") {
+        somBuzina.currentTime = 0;
+        somBuzina.play();
+      }
+    });
     document.addEventListener("keyup", e => teclas[e.key] = false);
 
     // --- Desenho dos carrinhos ---
     function desenharCarro(x, y, w, h, cor) {
       ctx.fillStyle = cor;
-      ctx.fillRect(x, y, w, h); // corpo
+      ctx.fillRect(x, y, w, h);
 
-      // para-brisa
       ctx.fillStyle = "white";
       ctx.fillRect(x + 8, y + 10, w - 16, 20);
 
-      // janelas
       ctx.fillStyle = "lightgray";
       ctx.fillRect(x + 8, y + 35, w - 16, 20);
 
-      // rodas
       ctx.fillStyle = "black";
-      ctx.fillRect(x - 6, y + 5, 8, 25);  // frente esquerda
-      ctx.fillRect(x + w - 2, y + 5, 8, 25); // frente direita
-      ctx.fillRect(x - 6, y + h - 30, 8, 25); // trás esquerda
-      ctx.fillRect(x + w - 2, y + h - 30, 8, 25); // trás direita
+      ctx.fillRect(x - 6, y + 5, 8, 25);
+      ctx.fillRect(x + w - 2, y + 5, 8, 25);
+      ctx.fillRect(x - 6, y + h - 30, 8, 25);
+      ctx.fillRect(x + w - 2, y + h - 30, 8, 25);
     }
 
     function desenharPista() {
-      // fundo (grama)
       ctx.fillStyle = "#228B22";
       ctx.fillRect(0, 0, largura, altura);
 
-      // pista
       ctx.fillStyle = "#444";
       ctx.fillRect(100, 0, 300, altura);
 
-      // bordas
       ctx.fillStyle = "#8B4513";
       ctx.fillRect(95, 0, 10, altura);
       ctx.fillRect(395, 0, 10, altura);
 
-      // linhas do meio
       ctx.fillStyle = "white";
       for (let i = -20; i < altura; i += 60) {
         ctx.fillRect(245, i + linhaPista, 10, 40);
@@ -170,11 +178,9 @@
     function atualizar() {
       if (!jogando || gameOver) return;
 
-      // mover carro
       if (teclas["ArrowLeft"] && carro.x > 120) carro.x -= carro.vel;
       if (teclas["ArrowRight"] && carro.x < 330) carro.x += carro.vel;
 
-      // spawn inimigos
       tempoSpawn++;
       if (tempoSpawn > 80) {
         criarInimigo();
@@ -185,25 +191,19 @@
 
       if (verificarColisao()) {
         gameOver = true;
-        somGameOver.play();  // Toca o som de Game Over quando o jogo acaba
+        somGameOver.play();
       }
 
-      // pontuação
       score++;
     }
 
     function desenhar() {
       desenharPista();
-
-      // desenhar jogador
       desenharCarro(carro.x, carro.y, carro.w, carro.h, "red");
-
-      // desenhar inimigos
       inimigos.forEach(c => {
         desenharCarro(c.x, c.y, c.w, c.h, "blue");
       });
 
-      // pontuação
       if (jogando && !gameOver) {
         ctx.fillStyle = "white";
         ctx.font = "bold 24px Arial";
@@ -243,12 +243,12 @@
       score = 0;
       gameOver = false;
       jogando = true;
-      somFundo.play();  // Recomeça o som de fundo quando o jogo começa
+      somFundo.play();
     }
 
     startBtn.addEventListener("click", () => {
       menu.style.display = "none";
-      somFundo.play();  // Inicia o som de fundo quando o jogo começa
+      somFundo.play();
       resetarJogo();
     });
 
