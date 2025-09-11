@@ -59,13 +59,11 @@
     <button onclick="showScores()">Ver Pontuações</button>
     <div id="scoreHistory"></div>
   </div>
-    <!-- Sons -->
+
+  <!-- Sons -->
+  <audio id="carHorn" src="zap.mp3" preload="auto"></audio>
   <audio id="bgMusic" src="somdefundo.mp3" preload="auto" loop></audio>
   <audio id="crashSound" src="carrobate.mp3" preload="auto"></audio>
-
-
-  <audio id="carHorn" src="zap.mp3" preload="auto"></audio>
-
 
   <script src="https://cdn.jsdelivr.net/npm/three@0.157.0/build/three.min.js"></script>
   <script>
@@ -253,55 +251,24 @@
     car.position.set(0, 0, 5);
     scene.add(car);
 
-  // ==============================
-// Buzina com MP3 🚗🔊
-// ==============================
-const horn = document.getElementById("carHorn");
-
-document.addEventListener("keydown", e => {
-  if (e.code === "Space") {
-    horn.currentTime = 0; // reinicia o som se já estiver tocando
-    horn.play();
-  }
-});
+    // ==============================
     // Sons
-const horn = document.getElementById("carHorn");
-const bgMusic = document.getElementById("bgMusic");
-const crashSound = document.getElementById("crashSound");
+    // ==============================
+    const horn = document.getElementById("carHorn");
+    const bgMusic = document.getElementById("bgMusic");
+    const crashSound = document.getElementById("crashSound");
 
-// Buzina (Espaço)
-document.addEventListener("keydown", e => {
-  if (e.code === "Space") {
-    horn.currentTime = 0;
-    horn.play();
-  }
-});
+    // Buzina
+    document.addEventListener("keydown", e => {
+      if (e.code === "Space") {
+        horn.currentTime = 0;
+        horn.play();
+      }
+    });
 
-// Inicia música de fundo quando o jogo começa
-bgMusic.volume = 0.4;
-bgMusic.play();
-
-// Colisão
-obstacles.forEach(o => {
-  const npcBox = new THREE.Box3().setFromObject(o);
-  if (carBox.intersectsBox(npcBox)) {
-    speed = 0;
-    gameOver = true;
-
-    // Toca som de batida
-    crashSound.currentTime = 0;
-    crashSound.play();
-
-    // Para música de fundo
-    bgMusic.pause();
-
-    scoreHistory.push(points);
-    document.getElementById("gameOverScreen").style.display = "flex";
-    document.getElementById("finalScore").innerText = "Pontuação: " + points;
-  }
-});
-
-
+    // Música de fundo
+    bgMusic.volume = 0.4;
+    bgMusic.play();
 
     // ==============================
     // NPC Cars
@@ -443,6 +410,12 @@ obstacles.forEach(o => {
         if (carBox.intersectsBox(npcBox)) {
           speed = 0;
           gameOver = true;
+
+          // Som de batida + pausa música
+          crashSound.currentTime = 0;
+          crashSound.play();
+          bgMusic.pause();
+
           scoreHistory.push(points);
           document.getElementById("gameOverScreen").style.display = "flex";
           document.getElementById("finalScore").innerText = "Pontuação: " + points;
@@ -478,8 +451,3 @@ obstacles.forEach(o => {
   </script>
 </body>
 </html>
-
-
-
-
-
