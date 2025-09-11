@@ -59,6 +59,10 @@
     <button onclick="showScores()">Ver Pontuações</button>
     <div id="scoreHistory"></div>
   </div>
+    <!-- Sons -->
+  <audio id="bgMusic" src="somdefundo.mp3" preload="auto" loop></audio>
+  <audio id="crashSound" src="carrobate.mp3" preload="auto"></audio>
+
 
   <audio id="carHorn" src="zap.mp3" preload="auto"></audio>
 
@@ -260,6 +264,43 @@ document.addEventListener("keydown", e => {
     horn.play();
   }
 });
+    // Sons
+const horn = document.getElementById("carHorn");
+const bgMusic = document.getElementById("bgMusic");
+const crashSound = document.getElementById("crashSound");
+
+// Buzina (Espaço)
+document.addEventListener("keydown", e => {
+  if (e.code === "Space") {
+    horn.currentTime = 0;
+    horn.play();
+  }
+});
+
+// Inicia música de fundo quando o jogo começa
+bgMusic.volume = 0.4;
+bgMusic.play();
+
+// Colisão
+obstacles.forEach(o => {
+  const npcBox = new THREE.Box3().setFromObject(o);
+  if (carBox.intersectsBox(npcBox)) {
+    speed = 0;
+    gameOver = true;
+
+    // Toca som de batida
+    crashSound.currentTime = 0;
+    crashSound.play();
+
+    // Para música de fundo
+    bgMusic.pause();
+
+    scoreHistory.push(points);
+    document.getElementById("gameOverScreen").style.display = "flex";
+    document.getElementById("finalScore").innerText = "Pontuação: " + points;
+  }
+});
+
 
 
     // ==============================
@@ -437,6 +478,7 @@ document.addEventListener("keydown", e => {
   </script>
 </body>
 </html>
+
 
 
 
