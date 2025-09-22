@@ -1,0 +1,464 @@
+<!DOCTYPE html> <!-- Declara que este documento é HTML5 -->
+<html lang="pt-BR"> <!-- Define o idioma da página como Português do Brasil -->
+<head>
+  <meta charset="UTF-8"> <!-- Define a codificação de caracteres como UTF-8 -->
+  <title>Snake Game</title> <!-- Título que aparece na aba do navegador -->
+
+  <style>
+    /* ===================== ESTILO DO BODY ===================== */
+    body {
+      margin: 0; /* Remove margens padrão do body do navegador */
+      display: flex; /* Usa flexbox para posicionar conteúdo */
+      justify-content: center; /* Centraliza horizontalmente o conteúdo do body */
+      align-items: center; /* Centraliza verticalmente o conteúdo do body */
+      height: 100vh; /* Faz o body ter 100% da altura da viewport */
+      background: linear-gradient(135deg, #2c3e50, #3498db); /* Fundo em degradê diagonal */
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; /* Pilha de fontes padrão */
+    }
+
+    /* ===================== ESTILO DO CANVAS ===================== */
+    canvas {
+      background: #ecf0f1; /* Cor de fundo do canvas (onde desenhamos o jogo) */
+      border: 8px solid #2c3e50; /* Borda sólida ao redor do canvas */
+      border-radius: 12px; /* Bordas arredondadas no canvas */
+      box-shadow: 0 8px 20px rgba(0,0,0,0.4); /* Sombra para dar profundidade */
+    }
+
+    /* ===================== OVERLAY (MENUS) ===================== */
+    #overlay {
+      position: absolute; /* Posicionamento absoluto para cobrir a tela */
+      top: 0; left: 0; /* Começa no canto superior esquerdo */
+      width: 100%; height: 100%; /* Ocupa toda a área visível */
+      display: flex; /* Usa flexbox para alinhar conteúdo do overlay */
+      justify-content: center; /* Centraliza conteúdo horizontalmente */
+      align-items: center; /* Centraliza conteúdo verticalmente */
+      flex-direction: column; /* Organiza filhos em coluna (vertical) */
+      background: rgba(44,62,80,0.85); /* Fundo escuro semi-transparente */
+      color: #fff; /* Cor do texto dentro do overlay */
+      font-size: 24px; /* Tamanho da fonte no overlay */
+    }
+
+    /* ===================== BOTÕES, SELECT, LABEL E INPUT (ESTILO COMUM) ===================== */
+    button, select, label, input {
+      margin: 10px; /* Espaçamento externo entre controles */
+      padding: 12px 28px; /* Preenchimento interno dos controles */
+      font-size: 18px; /* Tamanho da fonte dos controles */
+      font-weight: bold; /* Texto em negrito nos controles */
+      border: none; /* Remove bordas padrão */
+      border-radius: 8px; /* Cantos arredondados */
+      cursor: pointer; /* Cursor de ponteiro ao passar em elementos clicáveis */
+    }
+
+    /* ===================== BOTÃO ===================== */
+    button {
+      background: #27ae60; /* Cor de fundo verde para botões */
+      color: #fff; /* Texto branco nos botões */
+      transition: background 0.3s; /* Transição suave ao mudar a cor (hover) */
+    }
+    button:hover { background: #2ecc71; } /* Cor do botão ao passar o mouse */
+
+    /* ===================== SELECT ===================== */
+    select {
+      background: #fff; /* Fundo branco para selects */
+      color: #2c3e50; /* Texto escuro nos selects */
+    }
+
+    /* ===================== LABEL ===================== */
+    label {
+      font-weight: normal; /* Label com peso de fonte normal */
+      padding: 0; /* Remove padding */
+      margin: 6px; /* Pequeno espaçamento externo */
+    }
+
+    /* ===================== CHECKBOX ===================== */
+    input[type="checkbox"]{
+      width:18px; /* Largura do checkbox */
+      height:18px; /* Altura do checkbox */
+    }
+  </style>
+</head>
+<body>
+  <!-- Canvas onde o jogo será desenhado -->
+  <canvas id="gameCanvas" width="600" height="600"></canvas>
+
+  <!-- Div usada como overlay para menus e mensagens (Game Over, opções, etc.) -->
+  <div id="overlay"></div>
+
+  <script>
+  // ==================== VARIÁVEIS GLOBAIS ====================
+  // Referência ao elemento canvas onde desenharemos o jogo
+  const canvas = document.getElementById('gameCanvas'); // pega o elemento canvas pelo id
+  // Contexto 2D do canvas (API utilizada para desenhar formas, texto, imagens)
+  const ctx = canvas.getContext('2d'); // obtém o contexto 2D
+  // Referência ao elemento overlay (menu e telas)
+  const overlay = document.getElementById('overlay'); // pega a div do overlay
+
+  // Estado principal do jogo (serão inicializados em startSnake)
+  let snake, dir, food, score, lives; // cobra (array), direção, comida, pontuação, vidas
+
+  // Configurações básicas
+  let cell = 20; // tamanho de cada célula (em pixels)
+  let gameSpeed = 100; // velocidade do jogo em ms (quanto menor = mais rápido)
+  let mapSize = 600; // tamanho padrão do mapa (canvas), em pixels
+  let frameCount = 0; // contador de frames para animações (ex: língua piscante)
+
+  // ==================== SONS ====================
+  // Música de fundo (arquivo local 'Musica.mp3' — substitua pelo seu caminho se necessário)
+  const music = new Audio('Musica.mp3'); // cria objeto Audio para música
+  music.loop = true; // configura para tocar em loop contínuo
+  music.preload = 'auto'; // solicita pré-carregamento do áudio
+  music.volume = 0.5; // volume inicial da música (0.0 a 1.0)
+
+  // Som ao comer (arquivo local 'Maca.mp3')
+  const eatSound = new Audio('Maca.mp3'); // cria objeto Audio para o efeito de comer
+  eatSound.preload = 'auto'; // pré-carrega o som
+  eatSound.volume = 0.9; // volume do efeito de comer
+
+  // Som de morte (arquivo local 'Morte.mp3')
+  const deathSound = new Audio('Morte.mp3'); // cria objeto Audio para som de morte
+  deathSound.preload = 'auto'; // pré-carrega o som
+  deathSound.volume = 0.9; // volume do som de morte
+
+  // Flag para controlar se som está ativo
+  let soundEnabled = true; // true = efeitos e música tocam; false = silêncio
+
+  // ==================== TENTA TOCAR MÚSICA AUTOMATICAMENTE ====================
+  // Alguns navegadores bloqueiam autoplay — essa função tenta tocar e, se falhar, mostra botão para ativar som
+  function tryPlayMusic(){
+    if(!soundEnabled) return; // se o usuário desativou som nas opções, não tenta tocar
+    // tenta tocar a música (retorna uma Promise)
+    music.play().then(()=>{ 
+      // se iniciou com sucesso, logamos no console
+      console.log('Música tocando');
+    }).catch(err=>{
+      // se houve erro (autoplay bloqueado), mostramos aviso no console e um botão para ativar manualmente
+      console.warn('Reprodução automática bloqueada pelo navegador:', err);
+      showEnableSoundButton(); // cria um botão visível para o usuário ativar o som
+    });
+  }
+
+  // ==================== BOTÃO PARA ATIVAR SOM (CASO AUTOPLAY SEJA BLOQUEADO) ====================
+  // Cria um botão flutuante para o usuário ativar áudio manualmente
+  function showEnableSoundButton(){
+    const btnId = 'enable-sound-btn'; // id do botão para evitar duplicatas
+    if(document.getElementById(btnId)) return; // se já existe, não cria outro
+    const btn = document.createElement('button'); // cria elemento button
+    btn.id = btnId; // define id
+    btn.textContent = 'Ativar Som'; // texto do botão
+    // estilos inline mínimos para posicionar o botão no canto superior direito
+    btn.style.position = 'absolute';
+    btn.style.right = '16px';
+    btn.style.top = '16px';
+    btn.style.padding = '8px 12px';
+    btn.style.fontSize = '14px';
+    document.body.appendChild(btn); // adiciona botão ao body
+    // ao clicar, tenta tocar a música novamente e remove o botão se tiver sucesso
+    btn.addEventListener('click', ()=>{
+      music.play().then(()=>{ btn.remove(); }).catch(e=>{
+        // se ainda falhar, apenas loga o erro (pode acontecer se o usuário bloquear áudio)
+        console.error('Erro ao tentar tocar música após clique:', e);
+      });
+    });
+  }
+
+  // ==================== FUNÇÃO PARA TOCAR EFEITOS (REUSÁVEL) ====================
+  // Recebe um objeto Audio e tenta tocá-lo respeitando a flag soundEnabled
+  function playSound(sound){
+    if(!soundEnabled) return; // se som desativado nas opções, não toca nada
+    try{ sound.currentTime = 0; }catch(e){} // tenta resetar para o início (compatibilidade)
+    // toca o som; se der erro (ex: bloqueio), apenas logamos no console
+    sound.play().catch(err=>{
+      console.warn('Erro ao reproduzir som:', err);
+    });
+  }
+
+  // ==================== FUNÇÕES DE OVERLAY / MENUS ====================
+  // Mostra o overlay com conteúdo HTML (recebe string com HTML)
+  function showOverlay(html){ overlay.innerHTML = html; overlay.style.display = 'flex'; }
+  // Esconde o overlay (coloca display none)
+  function hideOverlay(){ overlay.style.display = 'none'; }
+
+  // ==================== MENU PRINCIPAL ====================
+  function mainMenu(){
+    try{ music.pause(); music.currentTime = 0; }catch(e){} // para a música quando volta ao menu (segurança)
+    showOverlay(`
+      <h1>🐍 Snake Game</h1>
+      <button onclick="startSnake()">START</button>
+      <button onclick="optionsMenu()">Opções</button>
+    `); // injeta HTML com botões que chamam startSnake e optionsMenu
+  }
+
+  // ==================== MENU DE OPÇÕES ====================
+  function optionsMenu(){
+    showOverlay(`
+      <h2>⚙️ Opções</h2>
+      <div style="display:flex;flex-direction:column;align-items:center;">
+        <label for="difficulty">Dificuldade (velocidade)</label>
+        <select id="difficulty">
+          <option value="120">Fácil</option>
+          <option value="100" selected>Médio</option>
+          <option value="60">Difícil</option>
+        </select>
+        <label for="mapSize">Tamanho do mapa</label>
+        <select id="mapSize">
+          <option value="400">Pequeno</option>
+          <option value="600" selected>Médio</option>
+          <option value="800">Grande</option>
+        </select>
+        <div style="margin-top:10px; display:flex; align-items:center; gap:8px;">
+          <input type="checkbox" id="soundOn" checked />
+          <label for="soundOn">Som ativado</label>
+        </div>
+        <div style="margin-top:12px;">
+          <button onclick="applyOptions()">Salvar</button>
+          <button onclick="mainMenu()">Voltar</button>
+        </div>
+      </div>
+    `); // injeta opções: dificuldade (velocidade), tamanho do mapa e checkbox de som
+  }
+
+  // ==================== APLICAR OPÇÕES ====================
+  function applyOptions(){
+    // pega valores selecionados no menu de opções
+    const diff = document.getElementById('difficulty').value; // valor da dificuldade (string)
+    const size = document.getElementById('mapSize').value; // valor do tamanho do mapa (string)
+    const soundOnCheckbox = document.getElementById('soundOn'); // checkbox de som
+
+    gameSpeed = parseInt(diff); // converte string para número e aplica velocidade do jogo
+    mapSize = parseInt(size); // aplica novo tamanho do mapa
+    soundEnabled = !!soundOnCheckbox.checked; // aplica preferência de som (boolean)
+
+    // ajusta o tamanho do canvas para o novo mapSize escolhido
+    canvas.width = mapSize;
+    canvas.height = mapSize;
+
+    if(!soundEnabled){ try{ music.pause(); }catch(e){} } // se desativou som, pausa a música
+    mainMenu(); // volta ao menu principal
+  }
+
+  // ==================== INICIA O JOGO (CONFIGURAÇÃO INICIAL) ====================
+  function startSnake(){
+    hideOverlay(); // esconde o overlay para mostrar o jogo
+
+    // calcula a posição inicial centralizada (arredondando para múltiplos da célula)
+    const startX = Math.floor((canvas.width/2)/cell)*cell; // coordenada X alinhada à grade
+    const startY = Math.floor((canvas.height/2)/cell)*cell; // coordenada Y alinhada à grade
+    // cria a cobra inicial com 3 segmentos (cada segmento é [x,y])
+    snake = [ [startX, startY], [startX-cell, startY], [startX-2*cell, startY] ];
+    dir = [1,0]; // direção inicial: para a direita (vetor [dx,dy])
+
+    food = randomFood(); // gera a primeira comida em posição aleatória válida
+    score = 0; // zera pontuação
+    lives = 3; // define número inicial de vidas
+    frameCount = 0; // zera contador de frames (usado em animações como a língua)
+
+    tryPlayMusic(); // tenta tocar a música de fundo (pode abrir botão de ativar som)
+    snakeLoop(); // inicia o loop principal do jogo
+  }
+
+  // ==================== GERAR COMIDA (POSIÇÃO ALEATÓRIA) ====================
+  function randomFood(){
+    let fx, fy; // variáveis para coordenadas da comida
+    do{
+      // calcula posição aleatória alinhada à grade (multiplo de 'cell')
+      fx = Math.floor(Math.random()*(canvas.width/cell))*cell; // posição X aleatória
+      fy = Math.floor(Math.random()*(canvas.height/cell))*cell; // posição Y aleatória
+      // repete enquanto a posição coincidir com algum segmento da cobra (evita spawn em cima da cobra)
+    } while(snake.some(seg=>seg[0]===fx && seg[1]===fy));
+    return [fx, fy]; // retorna array [x,y] da comida
+  }
+
+  // ==================== LOOP PRINCIPAL DO JOGO (DESENHO E LÓGICA) ====================
+  function snakeLoop(){
+    ctx.clearRect(0,0,canvas.width,canvas.height); // limpa o canvas inteiro antes de redesenhar
+    frameCount++; // incrementa contador de frames (usado para animações)
+
+    // ==================== DESENHAR GRID ====================
+    ctx.strokeStyle = '#e1e5e9'; // cor das linhas da grid
+    // desenha linhas verticais a cada 'cell' pixels
+    for(let x=0;x<canvas.width;x+=cell){ 
+      ctx.beginPath(); // inicia novo caminho
+      ctx.moveTo(x,0); // move para topo da linha
+      ctx.lineTo(x,canvas.height); // desenha até o fundo
+      ctx.stroke(); // aplica o traço
+    }
+    // desenha linhas horizontais a cada 'cell' pixels
+    for(let y=0;y<canvas.height;y+=cell){ 
+      ctx.beginPath(); // inicia novo caminho
+      ctx.moveTo(0,y); // move para o início da linha
+      ctx.lineTo(canvas.width,y); // desenha até o final
+      ctx.stroke(); // aplica o traço
+    }
+
+    // ==================== MOVIMENTAÇÃO DA COBRA ====================
+    // calcula nova posição da cabeça com base na direção atual
+    const head = [snake[0][0] + dir[0]*cell, snake[0][1] + dir[1]*cell];
+    // verifica colisão com paredes (fora do canvas)
+    const hitWall = head[0] < 0 || head[1] < 0 || head[0] >= canvas.width || head[1] >= canvas.height;
+    // verifica colisão com o próprio corpo (algum segmento com mesma posição)
+    const hitSelf = snake.some(seg => seg[0] === head[0] && seg[1] === head[1]);
+    if(hitWall || hitSelf){
+      // ao colidir, perde-se uma vida
+      lives -= 1;
+      if(lives <= 0){ // se não sobrou vida, toca som de morte e finaliza o jogo
+        playSound(deathSound); // toca som de morte
+        return gameOver(); // chama a função gameOver e retorna (encerra ciclo)
+      }
+      // se ainda tem vidas, reseta a cobra para posição inicial (centro)
+      const startX = Math.floor((canvas.width/2)/cell)*cell;
+      const startY = Math.floor((canvas.height/2)/cell)*cell;
+      snake = [ [startX, startY], [startX-cell, startY], [startX-2*cell, startY] ]; // reset cobra
+      dir = [1,0]; // direção volta para a direita
+      food = randomFood(); // gera nova comida
+      // faz uma pausa maior antes de reiniciar o loop para dar tempo ao jogador
+      setTimeout(snakeLoop, gameSpeed * 3);
+      return; // retorna para interromper execução atual
+    }
+
+    // adiciona nova cabeça ao início do array (movimento)
+    snake.unshift(head);
+
+    // se a cabeça está sobre a comida, aumenta pontuação e toca som; senão, remove a cauda
+    if(head[0] === food[0] && head[1] === food[1]){
+      score += 10; // incrementa pontuação
+      playSound(eatSound); // toca som de comer
+      food = randomFood(); // gera nova comida
+    } else {
+      snake.pop(); // remove o último segmento (a cobra "anda" sem crescer)
+    }
+
+    // ==================== DESENHAR COMIDA (MAÇÃ) ====================
+    ctx.beginPath(); // inicia caminho para a maçã (círculo)
+    ctx.fillStyle = '#e74c3c'; // cor de preenchimento vermelha
+    // desenha um círculo preenchido para representar a maçã (centralizada na célula)
+    ctx.arc(food[0] + cell/2, food[1] + cell/2, cell/2 - 2, 0, Math.PI*2);
+    ctx.fill(); // preenche o círculo
+    ctx.strokeStyle = '#c0392b'; // cor da borda da maçã
+    ctx.stroke(); // aplica o traço ao redor da maçã
+
+    ctx.beginPath(); // inicia caminho para o caule da maçã
+    ctx.strokeStyle = '#6f4a2a'; // cor marrom para o caule
+    ctx.lineWidth = 2; // largura do traço do caule
+    ctx.moveTo(food[0] + cell/2, food[1] + 4); // posição de início do caule (próxima ao centro)
+    ctx.lineTo(food[0] + cell/2, food[1] - 6); // fim do caule (um pouco acima)
+    ctx.stroke(); // aplica o traço do caule
+
+    ctx.beginPath(); // inicia caminho para a folha da maçã
+    ctx.fillStyle = '#27ae60'; // cor verde para a folha
+    // desenha uma elipse inclinada para representar a folha
+    ctx.ellipse(food[0] + cell/2 + 6, food[1] - 4, 5, 7, Math.PI/4, 0, 2*Math.PI);
+    ctx.fill(); // preenche a folha
+
+    // ==================== DESENHAR COBRA ====================
+    snake.forEach((seg, i) => { // para cada segmento da cobra (seg = [x,y], i = índice)
+      const radius = (i === 0) ? cell/2 : cell/2 - 2; // cabeça tem raio maior
+      // cria um gradiente radial para dar volume ao segmento
+      const grad = ctx.createRadialGradient(seg[0]+cell/2, seg[1]+cell/2, 3, seg[0]+cell/2, seg[1]+cell/2, radius);
+      grad.addColorStop(0, '#aef0c8'); grad.addColorStop(0.6, '#58d68d'); grad.addColorStop(1, '#117a43');
+      ctx.fillStyle = grad; // aplica o gradiente como preenchimento
+      ctx.beginPath(); // inicia caminho de desenho do segmento
+      ctx.arc(seg[0]+cell/2, seg[1]+cell/2, radius, 0, Math.PI*2); // desenha círculo do segmento
+      ctx.fill(); // preenche o segmento com o gradiente
+      if(i === 0){ drawHeadDetails(seg, dir); } // se for cabeça, desenha olhos e língua
+    });
+
+    // ==================== HUD (PONTUAÇÃO E VIDAS) ====================
+    ctx.fillStyle = '#2c3e50'; // cor do texto da HUD
+    ctx.font = '20px Arial'; // fonte usada na HUD
+    ctx.fillText(`Score: ${score}`, 20, 30); // desenha a pontuação no canto superior esquerdo
+    ctx.fillText(`Lives: ${lives}`, canvas.width - 110, 30); // desenha as vidas no canto superior direito
+
+    // agenda o próximo ciclo do loop conforme a velocidade definida
+    setTimeout(snakeLoop, gameSpeed);
+  }
+
+  // ==================== FUNÇÃO AUXILIAR: DESENHAR DETALHES DA CABEÇA ====================
+  function drawHeadDetails(seg, dir){
+    const cx = seg[0] + cell/2; // centro X do segmento (cabeça)
+    const cy = seg[1] + cell/2; // centro Y do segmento (cabeça)
+    let ox = 0, oy = 0; // offsets para deslocar olhos conforme a direção
+
+    // ajusta offsets para posicionar olhos dependendo da direção da cobra
+    if(dir[0] === 1){ ox = 6; oy = 6; } // olhando para a direita
+    if(dir[0] === -1){ ox = -6; oy = 6; } // olhando para a esquerda
+    if(dir[1] === -1){ ox = 0; oy = -8; } // olhando para cima
+    if(dir[1] === 1){ ox = 0; oy = 10; } // olhando para baixo
+
+    // desenha os olhos brancos (dois círculos pequenos)
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath(); ctx.arc(cx - 6 + ox, cy - 4 + oy, 3, 0, Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(cx + 6 + ox, cy - 4 + oy, 3, 0, Math.PI*2); ctx.fill();
+
+    // desenha as pupilas (menores e pretas) posicionadas à frente conforme a direção
+    ctx.fillStyle = '#000000';
+    const pupilForward = 2; // deslocamento da pupila para "olhar para frente"
+    if(dir[0] === 1){ 
+      // pupilas levemente deslocadas para a direita
+      ctx.beginPath(); ctx.arc(cx - 6 + ox + pupilForward, cy - 4 + oy, 1.5, 0, Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.arc(cx + 6 + ox + pupilForward, cy - 4 + oy, 1.5, 0, Math.PI*2); ctx.fill();
+    } else if(dir[0] === -1){
+      // pupilas levemente deslocadas para a esquerda
+      ctx.beginPath(); ctx.arc(cx - 6 + ox - pupilForward, cy - 4 + oy, 1.5, 0, Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.arc(cx + 6 + ox - pupilForward, cy - 4 + oy, 1.5, 0, Math.PI*2); ctx.fill();
+    } else if(dir[1] === -1){
+      // pupilas levemente deslocadas para cima
+      ctx.beginPath(); ctx.arc(cx - 6 + ox, cy - 4 + oy - pupilForward, 1.5, 0, Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.arc(cx + 6 + ox, cy - 4 + oy - pupilForward, 1.5, 0, Math.PI*2); ctx.fill();
+    } else {
+      // pupilas levemente deslocadas para baixo (direção para baixo)
+      ctx.beginPath(); ctx.arc(cx - 6 + ox, cy - 4 + oy + pupilForward, 1.5, 0, Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.arc(cx + 6 + ox, cy - 4 + oy + pupilForward, 1.5, 0, Math.PI*2); ctx.fill();
+    }
+
+    // desenha língua intermitente (aparece em alguns frames para animação)
+    if(frameCount % 15 < 6){ // condição que faz a língua aparecer periodicamente
+      ctx.strokeStyle = '#c0392b'; // cor da língua
+      ctx.lineWidth = 2; // espessura do traço da língua
+      const tx = cx + dir[0] * (cell/2 + 2); // posição X da ponta da língua
+      const ty = cy + dir[1] * (cell/2 + 2); // posição Y da ponta da língua
+      ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(tx, ty); ctx.stroke(); // linha da língua
+
+      ctx.beginPath();
+      if(dir[0] !== 0){
+        // desenha bifurcação da língua se a direção for horizontal
+        ctx.moveTo(tx, ty); ctx.lineTo(tx + dir[0]*4, ty - 4);
+        ctx.moveTo(tx, ty); ctx.lineTo(tx + dir[0]*4, ty + 4);
+      } else {
+        // desenha bifurcação da língua se a direção for vertical
+        ctx.moveTo(tx, ty); ctx.lineTo(tx - 4, ty + dir[1]*4);
+        ctx.moveTo(tx, ty); ctx.lineTo(tx + 4, ty + dir[1]*4);
+      }
+      ctx.stroke(); // aplica o traço das bifurcações
+    }
+  }
+
+  // ==================== GAME OVER ====================
+  function gameOver(){
+    try{ music.pause(); }catch(e){} // tenta pausar música (se estiver tocando)
+    playSound(deathSound); // toca som de morte
+    // mostra overlay de Game Over com pontuação final e botão para voltar ao menu
+    showOverlay(`
+      <h2>💀 Game Over</h2>
+      <p>Pontuação final: ${score}</p>
+      <button onclick="mainMenu()">Voltar ao Menu</button>
+    `);
+  }
+
+  // ==================== CONTROLES DO JOGADOR (TECLADO) ====================
+  // Escuta eventos de teclado para mudar direção da cobra
+  document.addEventListener('keydown', e => {
+    // seta direção para cima se tecla for ArrowUp e a cobra não estiver se movendo verticalmente
+    if(e.key === 'ArrowUp' && dir[1] === 0) dir = [0, -1];
+    // seta direção para baixo se tecla for ArrowDown e a cobra não estiver se movendo verticalmente
+    if(e.key === 'ArrowDown' && dir[1] === 0) dir = [0, 1];
+    // seta direção para esquerda se tecla for ArrowLeft e a cobra não estiver se movendo horizontalmente
+    if(e.key === 'ArrowLeft' && dir[0] === 0) dir = [-1, 0];
+    // seta direção para direita se tecla for ArrowRight e a cobra não estiver se movendo horizontalmente
+    if(e.key === 'ArrowRight' && dir[0] === 0) dir = [1, 0];
+  });
+
+  // ==================== INICIA MOSTRANDO O MENU PRINCIPAL AO CARREGAR A PÁGINA ====================
+  mainMenu(); // chama função que exibe o menu inicial
+  </script>
+</body>
+</html>
