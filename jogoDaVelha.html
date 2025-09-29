@@ -1,698 +1,251 @@
-<!-- Declara que é um documento HTML5 -->
-<!doctype html>
-<!-- Início do elemento root do HTML; idioma definido para pt-BR -->
-<html lang="pt-BR">
+<!-- Jogo da Velha — arquivo HTML com explicações linha a linha. 
+     Observação: usei `//` apenas nas linhas dentro do <script> (JavaScript),
+     e comentários apropriados para HTML --
+<!doctype html> <!-- Declara o tipo de documento como HTML5 -->
+<html lang="pt-BR"> <!-- Elemento raiz; lang indica que o conteúdo está em Português do Brasil -->
 <head>
-<!-- Define codificação para UTF-8 (suporta acentos) -->
-<meta charset="utf-8">
-<!-- Meta para responsividade em dispositivos móveis -->
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<!-- Título mostrado na aba do navegador -->
-<title>Jogo da Velha — Local & CPU (dificuldades) + Sons Base64</title>
+<meta charset="utf-8"> <!-- Define a codificação de caracteres (UTF-8) -->
+<meta name="viewport" content="width=device-width,initial-scale=1"> <!-- Configura o viewport para responsividade em dispositivos móveis -->
+<title>Jogo da Velha — Local & CPU</title> <!-- Título da aba do navegador -->
 
-<!-- ====== Estilos (tudo local no arquivo) ====== -->
-<!-- Início do bloco de estilos embutidos -->
 <style>
-  /* Variáveis CSS definidas para uso no tema */
-  :root{
-    /* cores principais do tema como variáveis */
-    --bg1:#07172a; --bg2:#05233a; --card:#072a3a; --accent:#06b6d4; --muted:#9fb7c9;
-  }
-  /* Aplica altura total e reset de margem nas tags html e body */
-  html,body{height:100%;margin:0;font-family:Inter,system-ui,Segoe UI,Roboto,Arial;}
-  /* Estilos do body: gradiente de fundo e centralização do conteúdo */
-  body{
-    background: linear-gradient(180deg,var(--bg1),var(--bg2));
-    display:flex;align-items:center;justify-content:center;padding:20px;box-sizing:border-box;
-    color:#e6f6fb;
-  }
-  /* Container principal da aplicação: largura, grid para painéis */
-  .app {
-    width:920px; max-width:100%; display:grid; grid-template-columns:420px 1fr; gap:18px;
-  }
-
-  /* Painel esquerdo: Tela inicial e controles */
-  .panel {
-    /* leve sobreposição translúcida no fundo do painel */
-    background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
-    border-radius:12px; padding:18px; box-shadow:0 12px 40px rgba(0,0,0,0.6);
-  }
-  /* Estilo do título dentro do painel */
-  .title { font-size:20px; margin:0 0 8px 0; color:#dff6ff; }
-  /* Subtítulo com cor mais apagada */
-  .subtitle { color:var(--muted); margin:0 0 16px 0; font-size:13px; }
-
-  /* Layout das opções/controles (coluna) */
-  .controls { display:flex; flex-direction:column; gap:10px; }
-  /* Linha que agrupa label + input/select */
-  .row { display:flex; gap:8px; align-items:center; }
-  /* Label com peso e tamanho fixos */
-  label { font-weight:700; font-size:13px; color:#dff6ff; }
-  /* Inputs e selects com padding e estilo escuro */
-  select, input[type="number"] { padding:8px; border-radius:8px; border:none; background:#042834; color:#dff6ff; }
-  /* Botão de início com destaque de cor */
-  .start-btn { background:var(--accent); color:#012; border:none; padding:10px 14px; border-radius:10px; cursor:pointer; font-weight:800; font-size:15px; }
-  /* Texto mais apagado (muted) */
-  .muted { color:var(--muted); font-size:13px; }
-
-  /* Painel direito: Tabuleiro + HUD */
-  .game-area {
-    background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
-    border-radius:12px; padding:18px; box-shadow:0 12px 40px rgba(0,0,0,0.6);
-    display:flex; flex-direction:column; gap:12px;
-  }
-
-  /* HUD superior (placar/vidas) */
-  .hud { display:flex; gap:10px; align-items:center; justify-content:space-between; }
-  .stats { display:flex; gap:10px; align-items:center; }
-  .stat { background:rgba(255,255,255,0.03); padding:8px 12px; border-radius:10px; font-weight:800; }
-
-  /* Tabuleiro 3x3: tamanho, grid 3x3 e espaçamento */
-  .board {
-    width:560px; max-width:100%; aspect-ratio:1/1; display:grid;
-    grid-template-columns:repeat(3,1fr); grid-template-rows:repeat(3,1fr); gap:14px;
-    margin:0 auto;
-  }
-  /* Cada célula: aparência, centralização do conteúdo e transições */
-  .cell {
-    background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
-    border-radius:14px; display:flex; align-items:center; justify-content:center;
-    font-size:86px; cursor:pointer; user-select:none; transition: transform .08s ease, background .12s ease;
-    color:#fff;
-  }
-  /* Efeito hover nas células */
-  .cell:hover{ transform:translateY(-4px); background:rgba(255,255,255,0.03); }
-  /* Classe para X (verde forte) */
-  .cell.x { color:#7efc8d; font-weight:900; } /* X em verde */
-  /* Classe para O (amarelo) */
-  .cell.o { color:#ffd166; font-weight:900; } /* O em amarelo */
-
-  /* Controles de rodadas na parte inferior */
-  .footer-controls { display:flex; gap:8px; justify-content:center; margin-top:6px; }
-  /* Botão secundário com estilo translúcido */
-  button.secondary { background:rgba(255,255,255,0.04); color:#e6f6fb; border:none; padding:8px 12px; border-radius:10px; cursor:pointer; font-weight:700; }
-
-  /* overlay agradável (usado no painel esquerdo) */
-  .nice-overlay { display:flex; flex-direction:column; gap:10px; align-items:center; justify-content:center; }
-  .note { background:rgba(6,182,212,0.08); padding:8px 10px; border-radius:8px; color:var(--accent); font-weight:700; }
-
-  /* Responsividade: em telas menores empilha os painéis */
-  @media (max-width:980px) {
-    .app { grid-template-columns:1fr; }
-    .board { width:420px; }
-  }
+/* Root: variáveis de cor usadas no CSS */
+:root{ --bg1:#07172a; --bg2:#05233a; --accent:#06b6d4; --muted:#9fb7c9; }
+/* Define altura e fontes base para html e body */
+html,body{height:100%;margin:0;font-family:Inter,system-ui,Segoe UI,Roboto,Arial;}
+/* Estilos principais do body (fundo gradiente, centralização, padding) */
+body{background:linear-gradient(180deg,var(--bg1),var(--bg2));display:flex;align-items:center;justify-content:center;padding:12px;color:#e6f6fb;}
+/* Layout principal do app com grid de duas colunas */
+.app{width:920px;max-width:100%;display:grid;grid-template-columns:420px 1fr;gap:14px;}
+/* Painéis com leve transparência, border-radius e sombra */
+.panel,.game-area{background:rgba(255,255,255,0.02);border-radius:10px;padding:14px;box-shadow:0 10px 30px rgba(0,0,0,0.55);}
+.title{font-size:18px;margin:0 0 6px;color:#dff6ff;} /* Título do painel */
+.subtitle{color:var(--muted);margin:0 0 12px;font-size:12px;} /* Subtítulo menor */
+.controls{display:flex;flex-direction:column;gap:8px;} /* Coluna de controles */
+.row{display:flex;gap:6px;align-items:center;flex-wrap:wrap;} /* Linha para rótulos + inputs */
+label{font-weight:700;font-size:12px;color:#dff6ff;} /* Estilo dos labels */
+select,input[type="number"]{padding:5px 7px;border-radius:7px;border:none;background:#042834;color:#dff6ff;flex:1;min-width:100px;} /* Inputs e selects */
+.start-btn{background:var(--accent);color:#012;border:none;padding:7px 10px;border-radius:8px;cursor:pointer;font-weight:800;font-size:13px;} /* Botão iniciar */
+.muted{color:var(--muted);font-size:11px;} /* Texto auxiliar */
+.hud{display:flex;flex-wrap:wrap;gap:5px;align-items:center;justify-content:space-between;font-size:12px;} /* Cabeçalho com placar */
+.stats{display:flex;gap:5px;flex-wrap:wrap;} /* Caixa de estatísticas */
+.stat{background:rgba(255,255,255,0.03);padding:3px 6px;border-radius:6px;font-weight:700;font-size:12px;} /* Blocos de estatísticas */
+/* Grade do tabuleiro: 3x3 com gap */
+.board{width:100%;max-width:380px;aspect-ratio:1/1;display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin:0 auto;}
+/* Estilo de cada célula */
+.cell{
+  background:rgba(255,255,255,0.02);
+  border-radius:10px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  cursor:pointer;
+  user-select:none;
+  transition:.1s;
+  color:#fff;
+  aspect-ratio:1/1;
+}
+/* Texto grande dentro da célula (X ou O) */
+.cell span{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  width:100%;
+  height:100%;
+  font-size:8vmin;   /* ocupa ~80% da célula */
+  line-height:1;
+}
+.cell:hover{transform:translateY(-3px);background:rgba(255,255,255,0.05);} /* Efeito ao passar o mouse */
+.cell.x span{color:#7efc8d;font-weight:900;} /* Estilo para X */
+.cell.o span{color:#ffd166;font-weight:900;} /* Estilo para O */
+.footer-controls{display:flex;gap:6px;justify-content:center;margin-top:6px;flex-wrap:wrap;} /* Botões de rodadas */
+button.secondary{background:rgba(255,255,255,0.04);color:#e6f6fb;border:none;padding:5px 8px;border-radius:7px;cursor:pointer;font-weight:700;font-size:12px;} /* Botões secundários */
+/* Overlay (modal) mostrado ao terminar as rodadas */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,0.8);display:flex;align-items:center;justify-content:center;z-index:10;visibility:hidden;opacity:0;transition:.3s;}
+.overlay.show{visibility:visible;opacity:1;} /* Classe que mostra o overlay */
+.overlay-box{background:#072a3a;padding:20px;border-radius:12px;text-align:center;max-width:300px;} /* Caixa dentro do overlay */
+.overlay-box h2{margin:0 0 10px;font-size:20px;color:#fff;}
+.overlay-box p{margin:0 0 15px;color:var(--muted);}
+.overlay-box button{background:var(--accent);border:none;padding:7px 12px;border-radius:8px;font-weight:700;cursor:pointer;}
+/* Responsividade */
+@media (max-width:980px){.app{grid-template-columns:1fr;}.board{max-width:320px;}}
+@media (max-width:520px){body{padding:6px;}.panel,.game-area{padding:8px;}.board{max-width:260px;gap:5px;}.stat{padding:2px 5px;font-size:11px;}.start-btn{font-size:12px;padding:6px 8px;}button.secondary{font-size:11px;padding:4px 7px;}}
 </style>
-<!-- Fim do bloco de estilos -->
-
 </head>
 <body>
-  <!-- ====== Estrutura da aplicação: painel esquerdo com configurações e painel direito com jogo ====== -->
-  <!-- Container principal que agrupa os dois painéis -->
-  <div class="app">
-
-    <!-- Painel esquerdo: Tela inicial e opções -->
-    <div class="panel">
-      <!-- Título principal -->
-      <h2 class="title">Jogo da Velha</h2>
-      <!-- Subtítulo explicando rapidamente -->
-      <div class="subtitle">Escolha modo, dificuldade (se for vs CPU) e clique em Start.</div>
-
-      <!-- Tela inicial estilizada com controles -->
-      <div class="controls">
-
-        <!-- Modo: PvP ou PvCPU -->
-        <div class="row">
-          <!-- Label para o select de modo -->
-          <label for="modeSelect">Modo</label>
-          <!-- Select que escolhe entre PvP e PvCPU -->
-          <select id="modeSelect" aria-label="Selecionar modo">
-            <!-- Opção PvP local -->
-            <option value="pvp">Jogador vs Jogador (local)</option>
-            <!-- Opção PvCPU -->
-            <option value="pvcpu">Jogador vs CPU</option>
-          </select>
-        </div>
-
-        <!-- Dificuldade: aparece apenas se modo for PvCPU -->
-        <div class="row">
-          <!-- Label para dificuldade -->
-          <label for="difficultySelect">Dificuldade</label>
-          <!-- Select com níveis de dificuldade -->
-          <select id="difficultySelect" aria-label="Selecionar dificuldade">
-            <option value="easy">Fácil</option>
-            <option value="medium" selected>Médio</option>
-            <option value="hard">Difícil</option>
-          </select>
-        </div>
-
-        <!-- Vidas iniciais -->
-        <div class="row">
-          <!-- Label para input de vidas -->
-          <label for="livesInput">Vidas (limite)</label>
-          <!-- Input numérico para definir vidas iniciais -->
-          <input id="livesInput" type="number" min="1" max="10" value="3" aria-label="Número de vidas">
-        </div>
-
-        <!-- Botão Start agradável -->
-        <div class="row" style="margin-top:8px;">
-          <!-- Botão que inicia o jogo -->
-          <button class="start-btn" id="startBtn" aria-label="Iniciar Jogo">Start</button>
-        </div>
-
-        <!-- Pequena área com nota/dica -->
-        <div class="nice-overlay">
-          <!-- Nota sobre a dificuldade 'hard' -->
-          <div class="note">Dica: No modo vs CPU, 'Difícil' usa Minimax (jogo perfeito).</div>
-          <!-- Explicação de pontos/vidas resumida -->
-          <div class="muted">Pontos: vitória = +1 | Perder para CPU = -1 vida | Empate = sem alteração</div>
-        </div>
+<div class="app">
+  <div class="panel">
+    <h1 class="title">Jogo da Velha</h1> <!-- Título visível no painel esquerdo -->
+    <p class="subtitle">Modo local ou contra CPU (fácil, médio, difícil) com sons integrados.</p> <!-- Descrição curta -->
+    <div class="controls">
+      <div class="row">
+        <label>Modo:</label>
+        <select id="mode">
+          <option value="local">2 Jogadores</option>
+          <option value="cpu-easy">CPU Fácil</option>
+          <option value="cpu-medium">CPU Médio</option>
+          <option value="cpu-hard">CPU Difícil</option>
+        </select>
       </div>
-    </div>
-
-    <!-- Painel direito: Jogo (HUD + Tabuleiro + Controles) -->
-    <div class="game-area" role="main" aria-label="Área do jogo">
-      <!-- HUD: placar e vidas -->
-      <div class="hud">
-        <div class="stats">
-          <!-- Exibe pontuação do jogador (X) -->
-          <div class="stat">Você (X): <span id="playerScore">0</span></div>
-          <!-- Exibe pontuação do oponente (O) -->
-          <div class="stat">CPU / Jogador 2 (O): <span id="opponentScore">0</span></div>
-          <!-- Exibe vidas restantes -->
-          <div class="stat">Vidas: <span id="livesDisplay">3</span></div>
-        </div>
-        <div>
-          <!-- Texto de status/instruções -->
-          <div id="statusText" style="font-weight:800;color:#cfeffd;">Clique Start para começar</div>
-        </div>
+      <div class="row">
+        <label>Rodadas:</label>
+        <input type="number" id="rounds" value="3" min="1" max="15"> <!-- Número de rodadas -->
       </div>
-
-      <!-- Tabuleiro 3x3 -->
-      <div id="board" class="board" aria-label="Tabuleiro do jogo" role="grid">
-        <!-- 9 células pré-criadas com data-index -->
-        <div class="cell" data-index="0" role="button" aria-label="casa 1"></div>
-        <div class="cell" data-index="1" role="button" aria-label="casa 2"></div>
-        <div class="cell" data-index="2" role="button" aria-label="casa 3"></div>
-
-        <div class="cell" data-index="3" role="button" aria-label="casa 4"></div>
-        <div class="cell" data-index="4" role="button" aria-label="casa 5"></div>
-        <div class="cell" data-index="5" role="button" aria-label="casa 6"></div>
-
-        <div class="cell" data-index="6" role="button" aria-label="casa 7"></div>
-        <div class="cell" data-index="7" role="button" aria-label="casa 8"></div>
-        <div class="cell" data-index="8" role="button" aria-label="casa 9"></div>
-      </div>
-
-      <!-- Controles de rodada -->
-      <div class="footer-controls">
-        <!-- Botão para iniciar nova rodada mantendo pontuações -->
-        <button class="secondary" id="newRoundBtn">Nova Rodada</button>
-        <!-- Botão para resetar pontuação (vidas não alteradas) -->
-        <button class="secondary" id="resetBtn">Resetar Pontuação</button>
-      </div>
+      <button class="start-btn" onclick="startGame()">Iniciar</button> <!-- Inicia o jogo -->
+      <p class="muted">Selecione modo, nº de rodadas e clique iniciar.</p>
     </div>
   </div>
 
-  <!-- ====== SONS EMBUTIDOS EM BASE64 (pequenos e leves) ======
-       Cada src é um data URI com áudio (WAV). Se o navegador não decodificar,
-       temos fallback de síntese sonora via WebAudio. ====== -->
-  <!-- Áudio de clique embutido em Base64 -->
-  <audio id="audioClick" preload="auto"
-    src="data:audio/wav;base64,UklGRmQAAABXQVZFZm10IBAAAAABAAEAIlYAAESsAAACABAAZGF0YSQAAAAAAgD//w8P"></audio>
+  <div class="game-area">
+    <div class="hud">
+      <div class="stats">
+        <div class="stat">Jogador X: <span id="scoreX">0</span></div> <!-- Placar X -->
+        <div class="stat">Jogador O: <span id="scoreO">0</span></div> <!-- Placar O -->
+        <div class="stat">Empates: <span id="ties">0</span></div> <!-- Empates -->
+      </div>
+      <div class="stat">Rodada: <span id="round">0</span>/<span id="totalRounds">0</span></div> <!-- Rodada atual / total -->
+    </div>
 
-  <!-- Áudio de vitória embutido em Base64 -->
-  <audio id="audioWin" preload="auto"
-    src="data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAIlYAAESsAAACABAAZGF0YRAAAAAA"></audio>
+    <div id="board" class="board"></div> <!-- Tabuleiro (renderizado via JS) -->
 
-  <!-- Áudio de derrota/empate embutido em Base64 -->
-  <audio id="audioLose" preload="auto"
-    src="data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAIlYAAESsAAACABAAZGF0YQAAAAAAAA=="></audio>
+    <div class="footer-controls">
+      <button class="secondary" onclick="resetBoard()">Reiniciar Rodada</button>
+      <button class="secondary" onclick="resetGame()">Novo Jogo</button>
+    </div>
+  </div>
+</div>
+
+<!-- Overlay -->
+<div id="overlay" class="overlay">
+  <div class="overlay-box">
+    <h2 id="overlayTitle">Fim de Jogo</h2>
+    <p id="overlayMsg"></p>
+    <button onclick="resetGame()">Novo Jogo</button>
+  </div>
+</div>
+
+<!-- 🎵 Áudios externos (som de clique e som de fim de jogo) -->
+<audio id="clickSound" src="sons/click.mp3"></audio> <!-- Som tocado ao marcar uma célula -->
+<audio id="endSound" src="sons/end.mp3"></audio> <!-- Som tocado quando todas as rodadas terminam -->
 
 <script>
-/* ============================================================
-   Jogo da Velha completo
-   - Dois modos: PvP local e PvCPU
-   - Dificuldades: easy, medium, hard (hard usa Minimax)
-   - Efeitos sonoros embutidos (Base64) com fallback via WebAudio
-   - Pontuação, vidas e UI elegante
-   - Código comentado em blocos e linhas explicativas
-   ============================================================ */
-/* Seção: Seleção de elementos do DOM */
-/* Pega o elemento select de modo (PvP / PvCPU) */
-const modeSelect = document.getElementById('modeSelect');           // selecionar modo
-/* Pega o elemento select de dificuldade */
-const difficultySelect = document.getElementById('difficultySelect'); // dificuldade
-/* Pega o input de vidas */
-const livesInput = document.getElementById('livesInput');           // input vidas
-/* Pega o botão Start */
-const startBtn = document.getElementById('startBtn');               // botão Start
+// A partir daqui: JavaScript com comentários // linha-a-linha
+// Seleciona o elemento do tabuleiro pelo ID
+const boardEl=document.getElementById("board");
+// Seleciona o overlay/modal de fim de jogo
+const overlay=document.getElementById("overlay");
+// Estado do jogo: variáveis iniciais
+let board=[],currentPlayer="X",gameActive=false,mode="local",round=0,totalRounds=0,scoreX=0,scoreO=0,ties=0;
 
-/* Pega elementos do HUD: pontuações e vidas */
-const playerScoreEl = document.getElementById('playerScore');       // HUD: pontuação do jogador (X)
-const opponentScoreEl = document.getElementById('opponentScore');   // HUD: pontuação do adversário (O)
-const livesDisplay = document.getElementById('livesDisplay');       // HUD: vidas restantes
-const statusText = document.getElementById('statusText');           // texto de status / instruções
+// Sons: obtém elementos <audio> já presentes no HTML
+const clickSound=document.getElementById("clickSound");
+const endSound=document.getElementById("endSound");
 
-/* Pega o container do tabuleiro e as células */
-const boardEl = document.getElementById('board');                   // container do tabuleiro
-const cells = Array.from(document.querySelectorAll('.cell'));       // as 9 células
-
-/* Pega botões de controle de rodada */
-const newRoundBtn = document.getElementById('newRoundBtn');         // botão nova rodada
-const resetBtn = document.getElementById('resetBtn');               // botão reset de pontuação
-
-/* -------------------------
-   Seção: Áudio - elementos e fallback de síntese
-   ------------------------- */
-/* Pega os elementos <audio> embutidos (data URIs) */
-const audioClickEl = document.getElementById('audioClick'); // clique
-const audioWinEl = document.getElementById('audioWin');     // vitória
-const audioLoseEl = document.getElementById('audioLose');   // derrota/empate
-
-/* WebAudio context para fallback / síntese de tons */
-let audioCtx = null; // criado sob demanda para compatibilidade mobile
-/* Função que cria o AudioContext sob demanda */
-function ensureAudioCtx() {
-  if (!audioCtx) {
-    try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e) { audioCtx = null; }
-  }
+// Função que inicia um novo jogo (reseta placares e inicia a primeira rodada)
+function startGame(){
+  overlay.classList.remove("show"); // Esconde overlay caso esteja visível
+  mode=document.getElementById("mode").value; // Lê o modo selecionado (local / cpu...)
+  totalRounds=parseInt(document.getElementById("rounds").value)||3; // Lê e valida número de rodadas
+  round=0;scoreX=0;scoreO=0;ties=0; // Reseta placares e contador de rodadas
+  updateScores(); // Atualiza o HUD com os valores zerados
+  nextRound(); // Começa a primeira rodada
 }
 
-/* Função para tocar dataURI <audio> com fallback para síntese */
-function playSound(audioEl, fallbackType) {
-  // tenta tocar o elemento <audio> primeiro
-  if (audioEl && audioEl.play) {
-    // reinicia o tempo (caso o som já tenha sido tocado)
-    try {
-      audioEl.currentTime = 0;
-      const p = audioEl.play();
-      if (p !== undefined) p.catch(() => synthTone(fallbackType)); // se não puder tocar, sintetiza
-      return;
-    } catch (e) {
-      // se erro, tenta síntese
-      synthTone(fallbackType);
-      return;
-    }
-  }
-  // se não houver elemento, sintetiza som
-  synthTone(fallbackType);
+// Avança para a próxima rodada ou mostra o overlay se todas as rodadas terminaram
+function nextRound(){
+  round++;if(round>totalRounds){showOverlay();return;} // Se passou do total, fim do jogo
+  board=["","","","","","","","",""];currentPlayer="X";gameActive=true; // Inicializa o tabuleiro e jogador
+  renderBoard(); // Desenha o tabuleiro na tela
+  document.getElementById("round").textContent=round; // Atualiza o contador na HUD
+  document.getElementById("totalRounds").textContent=totalRounds; // Mostra total de rodadas
+  if(mode.startsWith("cpu")&&currentPlayer==="O")cpuMove(); // Se a CPU jogar primeiro, executa jogada
 }
 
-/* Synth fallback simples: sons curtos baseados no tipo */
-function synthTone(type) {
-  ensureAudioCtx();
-  if (!audioCtx) return; // sem áudio possível
-  const now = audioCtx.currentTime;
-  // cria oscilador e ganho
-  const osc = audioCtx.createOscillator();
-  const gain = audioCtx.createGain();
-  osc.connect(gain); gain.connect(audioCtx.destination);
-  // configura de acordo com o tipo de som
-  if (type === 'click') {
-    // som curto tipo sine para clique
-    osc.type = 'sine'; osc.frequency.setValueAtTime(900, now);
-    gain.gain.setValueAtTime(0.001, now);
-    gain.gain.exponentialRampToValueAtTime(0.12, now + 0.005);
-    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.12);
-    osc.start(now); osc.stop(now + 0.13);
-  } else if (type === 'win') {
-    // arpejo rapidinho para vitória
-    osc.type = 'triangle';
-    const freqs = [660, 880, 1040];
-    let t = now;
-    freqs.forEach((f, i) => {
-      osc.frequency.setValueAtTime(f, t + i*0.07);
-    });
-    gain.gain.setValueAtTime(0.001, now);
-    gain.gain.exponentialRampToValueAtTime(0.18, now + 0.02);
-    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.35);
-    osc.start(now); osc.stop(now + 0.36);
-  } else {
-    // lose / tie: som mais grave (sawtooth)
-    osc.type = 'sawtooth';
-    osc.frequency.setValueAtTime(220, now);
-    gain.gain.setValueAtTime(0.001, now);
-    gain.gain.exponentialRampToValueAtTime(0.14, now + 0.02);
-    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.5);
-    osc.start(now); osc.stop(now + 0.42);
-  }
-}
-
-/* -------------------------
-   Seção: Estado do jogo
-   ------------------------- */
-/* board: array de 9 posições (null | 'X' | 'O') */
-let board = Array(9).fill(null);        // estado atual do tabuleiro
-/* Jogador atual: 'X' começa sempre */
-let currentPlayer = 'X';                // jogador atual ('X' sempre começa)
-/* Flag que controla se jogadas são aceitas */
-let gameActive = false;                 // se a rodada está aceita de jogadas
-/* Pontuações e vidas */
-let playerScore = 0;                    // pontuação do jogador (X)
-let opponentScore = 0;                  // pontuação do oponente (O) - pode ser CPU ou Jogador 2
-let lives = Number(document.getElementById('livesInput').value) || 3; // vidas iniciais
-/* Flags de modo e dificuldade */
-let vsCPU = false;                      // flag se estamos jogando contra CPU
-let aiDifficulty = 'medium';            // dificuldade atual (easy/medium/hard)
-let waitingForAi = false;               // impede cliques enquanto CPU "pensa"
-
-/* Combinações vencedoras - padrão do jogo da velha */
-const WIN_COMBOS = [
-  [0,1,2],[3,4,5],[6,7,8],
-  [0,3,6],[1,4,7],[2,5,8],
-  [0,4,8],[2,4,6]
-];
-
-/* -------------------------
-   Funções utilitárias e UI
-   ------------------------- */
-
-/* Atualiza HUD (placar e vidas) na interface */
-function updateHUD(){
-  playerScoreEl.textContent = String(playerScore);
-  opponentScoreEl.textContent = String(opponentScore);
-  livesDisplay.textContent = String(lives);
-}
-
-/* Renderiza o tabuleiro na tela conforme array 'board' */
+// Renderiza (desenha) o tabuleiro com base no array `board`
 function renderBoard(){
-  cells.forEach((cell, idx) => {
-    const val = board[idx];
-    cell.textContent = val ? val : '';
-    cell.classList.remove('x','o');
-    if (val === 'X') cell.classList.add('x');
-    if (val === 'O') cell.classList.add('o');
+  boardEl.innerHTML=""; // Limpa conteúdo anterior
+  board.forEach((cell,i)=>{
+    const div=document.createElement("div"); // Cria a célula
+    div.className="cell"+(cell?(" "+cell.toLowerCase()):""); // Adiciona classe x ou o se houver valor
+    const span=document.createElement("span"); // Texto dentro da célula
+    span.textContent=cell; // Insere X ou O (ou vazio)
+    div.appendChild(span);
+    div.onclick=()=>makeMove(i); // Define o comportamento ao clicar (faz a jogada)
+    boardEl.appendChild(div); // Adiciona a célula ao tabuleiro
   });
 }
 
-/* Verifica vencedor/empate:
-   retorna 'X' ou 'O' se vencedor, 'draw' se empate, null se ainda em andamento */
-function evaluate(b){
-  for (const combo of WIN_COMBOS){
-    const [a,bIdx,c] = combo;
-    if (b[a] && b[a] === b[bIdx] && b[a] === b[c]) return b[a];
-  }
-  if (b.every(cell => cell !== null)) return 'draw';
-  return null;
-}
-
-/* Limpa o tabuleiro para uma nova rodada (mantém placar/vidas) */
-function resetRound(){
-  board = Array(9).fill(null);
-  currentPlayer = 'X';
-  gameActive = true;
-  waitingForAi = false;
-  statusText.textContent = (vsCPU ? 'Modo: vs CPU — você joga X' : 'Modo: Local — jogador X começa');
-  renderBoard();
-}
-
-/* -------------------------
-   Funções de fim de rodada (atualizam pontuação/vidas)
-   ------------------------- */
-function handlePlayerWin(){
-  // jogador X venceu
-  playerScore += 1;        // soma ponto
-  updateHUD();             // atualiza HUD
-  statusText.textContent = 'Você (X) venceu a rodada! (+1 ponto)'; // mensagem
-  playSound(audioWinEl, 'win'); // som de vitória
-  gameActive = false;      // bloqueia cliques
-}
-
-function handleOpponentWin(){
-  // O venceu (pode ser CPU ou jogador 2)
-  opponentScore += 1;      // soma ponto para o oponente
-  lives -= (vsCPU ? 1 : 0); // apenas contra CPU o jogador perde vida (segundo regras: perder para CPU -> -1 vida)
-  updateHUD();
-  statusText.textContent = vsCPU ? 'CPU venceu esta rodada! (você perde 1 vida)' : 'Jogador O venceu a rodada!';
-  playSound(audioLoseEl, 'lose'); // som de derrota
-  gameActive = false;
-  // se vidas chegaram a zero: fim de jogo completo (overlay/efeito)
-  if (lives <= 0 && vsCPU){
-    // mostra mensagem final (não usamos overlay separado — apenas status)
-    statusText.textContent = `Fim de jogo: você ficou sem vidas. Pontuação final: ${playerScore}`;
-    // bloquear nova rodada automática; jogador precisa resetar ou ajustar vidas
+// Executa uma jogada no índice i
+function makeMove(i){
+  if(!gameActive||board[i])return; // Ignora se jogo pausado ou célula ocupada
+  board[i]=currentPlayer; clickSound.play(); // Marca a célula e toca som de clique
+  renderBoard(); // Atualiza visual do tabuleiro
+  if(checkWin()){endRound(currentPlayer);} // Se houve vitória, termina a rodada
+  else if(board.every(c=>c)){endRound("tie");} // Se não houver espaços vazios, empate
+  else{
+    currentPlayer=currentPlayer==="X"?"O":"X"; // Troca de jogador
+    if(mode.startsWith("cpu")&&currentPlayer==="O")setTimeout(cpuMove,400); // Se CPU for o próximo, joga com delay
   }
 }
 
-function handleDraw(){
-  statusText.textContent = 'Empate nesta rodada.';
-  playSound(audioLoseEl, 'lose'); // som de empate (mesmo som)
-  gameActive = false;
+// Lógica da CPU: escolhe um movimento conforme a dificuldade
+function cpuMove(){
+  let move=mode==="cpu-easy"?randomMove():mode==="cpu-medium"?mediumMove():bestMove();
+  if(move!==undefined)makeMove(move); // Executa a jogada da CPU
 }
 
-/* -------------------------
-   Jogador clica em uma célula: handler
-   ------------------------- */
-function onCellClick(e){
-  // impede ação se não está aceitando jogadas
-  if (!gameActive) return;
-  if (waitingForAi) return; // se AI está pensando, ignora cliques
-  const idx = Number(e.currentTarget.dataset.index); // índice da célula
-  if (board[idx] !== null) return; // se já ocupada, ignora
+// Movimento aleatório (fácil): escolhe entre as células livres
+function randomMove(){let a=board.map((c,i)=>c?"":i).filter(x=>x!="");return a[Math.floor(Math.random()*a.length)];}
 
-  // marca posição com o jogador atual
-  board[idx] = currentPlayer;
-  playSound(audioClickEl, 'click'); // som de clique
-  renderBoard(); // atualiza UI
+// Médio: tenta usar a estratégia ótima (bestMove), senão aleatório
+function mediumMove(){return bestMove()??randomMove();}
 
-  // checa resultado
-  const result = evaluate(board);
-  if (result === 'X'){ handlePlayerWin(); return; }
-  if (result === 'O'){ handleOpponentWin(); return; }
-  if (result === 'draw'){ handleDraw(); return; }
-
-  // troca turnos
-  currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
-  statusText.textContent = (currentPlayer === 'X') ? "Sua vez: X" : (vsCPU ? "Vez da CPU (O)" : "Vez: O");
-
-  // se agora for vez da CPU e modo vsCPU, chama AI
-  if (vsCPU && currentPlayer === 'O'){
-    // bloqueia cliques enquanto CPU pensa
-    waitingForAi = true;
-    gameActive = false;
-    // pequena espera para dar sensação de pensamento
-    setTimeout(() => {
-      aiPlay();
-      waitingForAi = false;
-      // reativa jogo se ainda não terminou
-      if (evaluate(board) === null) gameActive = true;
-    }, 420);
-  }
+// Melhor movimento usando MiniMax (difícil)
+function bestMove(){
+  let bestScore=-Infinity,move;
+  board.forEach((c,i)=>{if(!c){board[i]="O";let s=minimax(board,0,false);board[i]="";if(s>bestScore){bestScore=s;move=i;}}});
+  return move;
 }
 
-/* -------------------------
-   Funções do AI (várias dificuldades)
-   ------------------------- */
-
-/* Retorna índice aleatório dentre vazios */
-function randomMove(b){
-  const empties = b.map((v,i) => v === null ? i : -1).filter(i => i !== -1);
-  if (!empties.length) return null;
-  return empties[Math.floor(Math.random()*empties.length)];
+// Implementação do algoritmo minimax
+function minimax(b,depth,isMax){
+  let w=getWinner(b);if(w==="O")return 10-depth;if(w==="X")return depth-10;if(!b.includes(""))return 0;
+  if(isMax){let best=-Infinity;b.forEach((c,i)=>{if(!c){b[i]="O";best=Math.max(best,minimax(b,depth+1,false));b[i]="";}});return best;}
+  else{let best=Infinity;b.forEach((c,i)=>{if(!c){b[i]="X";best=Math.min(best,minimax(b,depth+1,true));b[i]="";}});return best;}
 }
 
-/* Heurística média: tenta ganhar/blockear, senão centro/cantos/lados */
-function mediumMove(b){
-  // checa se AI pode ganhar
-  for (const combo of WIN_COMBOS){
-    const [a,bIdx,c] = combo;
-    const vals = [b[a], b[bIdx], b[c]];
-    if (vals.filter(v => v === 'O').length === 2 && vals.includes(null)){
-      return combo[vals.indexOf(null)];
-    }
-  }
-  // checa se precisa bloquear X
-  for (const combo of WIN_COMBOS){
-    const [a,bIdx,c] = combo;
-    const vals = [b[a], b[bIdx], b[c]];
-    if (vals.filter(v => v === 'X').length === 2 && vals.includes(null)){
-      return combo[vals.indexOf(null)];
-    }
-  }
-  // centro
-  if (b[4] === null) return 4;
-  // canto
-  const corners = [0,2,6,8].filter(i => b[i] === null);
-  if (corners.length) return corners[Math.floor(Math.random()*corners.length)];
-  // lados
-  const sides = [1,3,5,7].filter(i => b[i] === null);
-  if (sides.length) return sides[Math.floor(Math.random()*sides.length)];
-  return randomMove(b);
+// Checa se existe um vencedor no tabuleiro atual
+function checkWin(){return getWinner(board)!==null;}
+
+// Retorna o vencedor ('X' ou 'O') ou null se não houver
+function getWinner(b){const wins=[[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];for(const [a,c,d]of wins)if(b[a]&&b[a]===b[c]&&b[a]===b[d])return b[a];return null;}
+
+// Finaliza a rodada, atualiza placares e agenda próxima rodada
+function endRound(w){
+  gameActive=false; // Pausa o jogo até próxima rodada
+  if(w==="X")scoreX++;else if(w==="O")scoreO++;else ties++; // Atualiza placares conforme resultado
+  updateScores();
+  setTimeout(nextRound,1000); // Aguarda 1s e inicia próxima rodada
 }
 
-/* Minimax (difícil) - retorna {idx, score} para o melhor movimento
-   - Jogador AI = 'O' (maximizador)
-   - Jogador humano = 'X' (minimizador)
-*/
-function minimax(newBoard, playerMark){
-  // checa estado terminal
-  const result = evaluate(newBoard);
-  if (result === 'O') return {score: 10};
-  if (result === 'X') return {score: -10};
-  if (result === 'draw') return {score: 0};
-
-  // acumula movimentos possíveis
-  const moves = [];
-  newBoard.forEach((v,i) => {
-    if (v === null){
-      // cria cópia do board e faz move
-      const copy = newBoard.slice();
-      copy[i] = playerMark;
-      // recursão: trocar jogador
-      const next = minimax(copy, playerMark === 'O' ? 'X' : 'O');
-      moves.push({index: i, score: next.score});
-    }
-  });
-
-  // se o jogador atual é 'O' - queremos máximo
-  if (playerMark === 'O'){
-    // escolhe o movimento com maior score
-    let best = moves[0];
-    for (const m of moves) if (m.score > best.score) best = m;
-    return best;
-  } else {
-    // jogador 'X' - escolhe mínimo
-    let best = moves[0];
-    for (const m of moves) if (m.score < best.score) best = m;
-    return best;
-  }
+// Atualiza os elementos do HUD com os valores atuais
+function updateScores(){
+  document.getElementById("scoreX").textContent=scoreX;
+  document.getElementById("scoreO").textContent=scoreO;
+  document.getElementById("ties").textContent=ties;
 }
 
-/* Função que faz a jogada do AI dependendo da dificuldade */
-function aiPlay(){
-  // protege caso jogo já tenha terminado
-  if (evaluate(board) !== null) return;
+// Função para reiniciar apenas a rodada atual (avança para nextRound)
+function resetBoard(){if(round<=totalRounds)nextRound();}
+// Função para reiniciar o jogo completamente
+function resetGame(){startGame();}
 
-  let idx = null;
-  if (aiDifficulty === 'easy'){
-    // fácil: move aleatório
-    idx = randomMove(board);
-  } else if (aiDifficulty === 'medium'){
-    // médio: heurística
-    idx = mediumMove(board);
-  } else {
-    // difícil: minimax (jogo perfeito)
-    // chamamos minimax como 'O' e pegamos o índice
-    const move = minimax(board, 'O');
-    idx = (move && move.index !== undefined) ? move.index : randomMove(board);
-  }
-
-  // se não houver índice (tabuleiro cheio), retorna
-  if (idx === null || idx === undefined) return;
-
-  // aplica movimento
-  board[idx] = 'O';
-  playSound(audioClickEl, 'click'); // som ao jogar
-  renderBoard();
-
-  // checa resultado
-  const result = evaluate(board);
-  if (result === 'O'){ handleOpponentWin(); return; }
-  if (result === 'draw'){ handleDraw(); return; }
-
-  // volta vez ao jogador humano (X)
-  currentPlayer = 'X';
-  statusText.textContent = 'Sua vez: X';
+// Mostra o overlay com o placar final quando todas as rodadas terminam
+function showOverlay(){
+  let msg=`Placar final → X: ${scoreX} | O: ${scoreO} | Empates: ${ties}`; // Mensagem com template string
+  document.getElementById("overlayMsg").textContent=msg; // Insere mensagem no overlay
+  overlay.classList.add("show"); endSound.play(); // Mostra overlay e toca som de fim de jogo
 }
-
-/* -------------------------
-   Eventos: Start, Nova Rodada, Reset e clicks nas células
-   ------------------------- */
-
-/* quando mudar modo: ajusta visibilidade/uso da dificuldade */
-modeSelect.addEventListener('change', () => {
-  vsCPU = (modeSelect.value === 'pvcpu');
-  // se vsCPU, habilita seletor dificuldade, senão desabilita
-  difficultySelect.disabled = !vsCPU;
-});
-
-/* atualizar variáveis de dificuldade/vidas ao alterar selects/inputs */
-difficultySelect.addEventListener('change', () => { aiDifficulty = difficultySelect.value; });
-livesInput.addEventListener('change', () => {
-  const v = Number(livesInput.value);
-  if (Number.isInteger(v) && v >= 1) {
-    lives = v; updateHUD();
-  }
-});
-
-/* Start: configura modo e prepara primeira rodada */
-startBtn.addEventListener('click', () => {
-  vsCPU = (modeSelect.value === 'pvcpu');            // atualiza modo
-  aiDifficulty = difficultySelect.value;             // atualiza dificuldade
-  lives = Number(livesInput.value) || 3;             // vidas
-  playerScore = 0; opponentScore = 0;                // zera pontuação ao iniciar sessão
-  updateHUD();                                       // atualiza HUD
-  resetRound();                                      // zera tabuleiro para primeira rodada
-  // status
-  statusText.textContent = vsCPU ? `Modo vs CPU — dificuldade: ${aiDifficulty}` : 'Modo local — dois jogadores';
-  // se CPU começar primeiro (não aqui, X começa sempre), logic would go here
-});
-
-/* Nova Rodada: apenas reinicia board mas mantém pontuações e vidas */
-newRoundBtn.addEventListener('click', () => {
-  resetRound();
-  updateHUD();
-});
-
-/* Resetar pontuação: zera pontuações, não altera vidas */
-resetBtn.addEventListener('click', () => {
-  playerScore = 0; opponentScore = 0; updateHUD();
-  resetRound();
-});
-
-/* Clique nas células: addEventListener para cada célula */
-cells.forEach(cell => cell.addEventListener('click', onCellClick));
-
-/* -------------------------
-   Inicialização visual ao carregar a página
-   ------------------------- */
-updateHUD();
-renderBoard();
-statusText.textContent = 'Escolha modo e clique Start.';
-
-/* ============================================================
-   Observações finais (explicações rápidas e dicas de uso):
-   - Para jogar PvP local: selecione 'Jogador vs Jogador' e clique Start.
-   - Para jogar contra CPU: selecione 'Jogador vs CPU', escolha dificuldade e clique Start.
-   - Vidas: só são descontadas quando você perde para a CPU (segundo sua regra).
-   - Dificuldades:
-       * easy: jogadas aleatórias
-       * medium: heurística (bloqueia e tenta ganhar)
-       * hard: Minimax (impossível de vencer se o CPU começar ou fizer jogadas perfeitas)
-   - Os sons vêm de data URIs (Base64). Se o navegador não tocar o data URI, a síntese WebAudio fará um som similar.
-   - Tudo está em um único arquivo; você pode ajustar cores e textos diretamente no topo do arquivo.
-   ============================================================ */
 </script>
-
-  <!-- Música de fundo (arquivo externo referenciado) -->
-  <audio id="bg-music" src="Fundos.mp3" loop></audio>
-  <!-- Som de clique (arquivo externo referenciado) -->
-  <audio id="click-sound" src="Clique.mp3"></audio>
-
-  <script>
-    // Pega elementos de música de fundo e som de clique externos
-    const bgMusic = document.getElementById('bg-music');
-    const clickSound = document.getElementById('click-sound');
-
-    // começa a tocar música de fundo quando o usuário clicar em Start ou no documento
-    function iniciarMusicaFundo() {
-      bgMusic.volume = 0.3; // volume
-      bgMusic.play();
-      // remove este listener depois que tocar
-      document.removeEventListener('click', iniciarMusicaFundo);
-      document.getElementById('startBtn').removeEventListener('click', iniciarMusicaFundo);
-    }
-
-    // adiciona listeners para desbloquear áudio (necessário em muitos navegadores)
-    document.addEventListener('click', iniciarMusicaFundo);
-    document.getElementById('startBtn').addEventListener('click', iniciarMusicaFundo);
-
-    // função para tocar clique quando marcar X ou O (não está amarrada automaticamente ao onCellClick; opcional)
-    function tocarClique() {
-      clickSound.currentTime = 0;
-      clickSound.play();
-    }
-  </script>
-
 </body>
 </html>

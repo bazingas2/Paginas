@@ -457,6 +457,29 @@
     if(e.key === 'ArrowRight' && dir[0] === 0) dir = [1, 0];
   });
 
+  function resizeCanvas() {
+    const defaultSize = 600;
+    const size = Math.min(window.innerWidth, window.innerHeight, defaultSize);
+    canvas.width = size;
+    canvas.height = size;
+  }
+  window.addEventListener('resize', resizeCanvas);
+  resizeCanvas(); // Initial call
+
+  function draw() {
+    const scaleX = canvas.width / 600;
+    const scaleY = canvas.height / 600;
+    const scale = Math.min(scaleX, scaleY);
+
+    ctx.save();
+    ctx.scale(scale, scale);
+
+    drawGameElements();
+
+    ctx.restore();
+  }
+
+
   // ==================== INICIA MOSTRANDO O MENU PRINCIPAL AO CARREGAR A PÁGINA ====================
   mainMenu(); // chama função que exibe o menu inicial
   </script>

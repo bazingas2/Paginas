@@ -1,0 +1,289 @@
+<!doctype html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Jogos — Portal</title>
+  <style>
+    :root {
+      --bg: #0f1724;
+      --card: #0b1220;
+      --accent: #06b6d4;
+      --muted: #94a3b8
+    }
+
+    * {
+      box-sizing: border-box
+    }
+
+    html,
+    body {
+      height: 100vh;
+      margin: 0;
+      font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+      color: #e6eef6;
+      background: var(--bg)
+    }
+
+    .wrap {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      padding: 18px;
+      gap: 12px
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between
+    }
+
+    .brand {
+      font-weight: 700;
+      font-size: 18px
+    }
+
+    .controls {
+      display: flex;
+      gap: 8px;
+      align-items: center
+    }
+
+    button,
+    select {
+      background: var(--card);
+      border: 1px solid rgba(255, 255, 255, 0.04);
+      color: inherit;
+      padding: 8px 12px;
+      border-radius: 8px;
+      cursor: pointer
+    }
+
+    main {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 20vw 1fr 20vw;
+      gap: 12px
+    }
+
+    .left,
+    .right {
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.02), rgba(0, 0, 0, 0.02));
+      padding: 12px;
+      border-radius: 12px;
+      overflow: auto;
+      height: 70vh;
+    }
+
+    .game-btn {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px;
+      border-radius: 8px;
+      margin-bottom: 8px;
+      cursor: pointer;
+      border: 1px solid rgba(255, 255, 255, 0.02);
+    }
+
+    .game-btn:hover {
+      outline: 2px solid rgba(6, 182, 212, 0.08)
+    }
+
+    .preview {
+      font-size: 12px;
+      color: var(--muted)
+    }
+
+    /* iframe container */
+    .player {
+      background: #000;
+      border-radius: 12px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      min-height: 0;
+    }
+
+    .player-toolbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 12px;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.02), transparent)
+    }
+
+    .player-viewport {
+      flex: 1;
+      min-height: 0;
+      position: relative;
+      height: 50%;
+      width: 100%;
+    }
+
+    iframe#gameFrame {
+      height: 100%;
+      width: 100%;
+      object-fit: contain;
+      border: 0;
+      display: block
+    }
+
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.06);
+      border-radius: 8px
+    }
+
+    .hidden {
+      display: none
+    }
+
+    @media (max-width:1080px) {
+
+      main {
+        grid-template-columns: 90vw 90vw 90vw;
+        grid-template-rows: 100vh 60vh 60vh;
+        grid-auto-flow: column;
+      }
+
+      .left {
+        order: 2
+      }
+
+      .right {
+        order: 3
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+    <header>
+      <div class="brand">Portal de Jogos</div>
+      <div class="controls">
+        <button id="fsBtn">Tela cheia</button>
+        <button id="openNewTab">Abrir em nova aba</button>
+      </div>
+    </header>
+
+    <main>
+      <!-- Lista de jogos -->
+      <aside class="left">
+        <h3>Jogos</h3>
+        <div class="game-btn" data-src="https://brancazx.github.io/jogos/Cobrinh.html">
+          <div>
+            <div><strong>Cobrinha</strong></div>
+            <div class="preview">Cobrinh.html (Snake)</div>
+          </div>
+          <div>▶</div>
+        </div>
+
+        <div class="game-btn" data-src="https://brancazx.github.io/jogos/falling-object-game.html">
+          <div>
+            <div><strong>Space Shooter</strong></div>
+            <div class="preview">falling-object-game.html</div>
+          </div>
+          <div>▶</div>
+        </div>
+
+        <div class="game-btn" data-src="https://brancazx.github.io/jogos/jogoDaVelha.html">
+          <div>
+            <div><strong>Jogo da Velha</strong></div>
+            <div class="preview">jogoDaVelha.html (Tic-Tac-Toe)</div>
+          </div>
+          <div>▶</div>
+        </div>
+      </aside>
+
+      <!-- Player central -->
+      <section class="player">
+        <div class="player-toolbar">
+          <div id="currentTitle">Nenhum jogo carregado</div>
+          <div>
+            <button id="reloadBtn">Recarregar</button>
+            <button id="hideToolbar">Esconder barra</button>
+          </div>
+        </div>
+        <div class="player-viewport">
+          <iframe id="gameFrame" src="" scrolling="no" allowfullscreen></iframe>
+        </div>
+      </section>
+
+      <!-- Tutorial lateral -->
+      <aside class="right">
+        <h3>Tutoriais dos Jogos</h3>
+        <div>
+          <h4>Cobrinha</h4>
+          <p>Utilize as setinhas (direcionais) para mover a cobra, coma todas as maçãs!</p>
+        </div>
+        <div>
+          <h4>Space Shooters</h4>
+          <p>Utilize as setinhas para mexer a nave e o espaço para atirar, destrua o máximo de naves que voçê conseguir</p>
+        </div>
+        <div>
+          <h4>Jogo da Velha</h4>
+          <p>Jogue contra o computador ou um amigo. Clique em iniciar primeiro e depois clique em uma célula vazia para colocar X ou O. O objetivo é alinhar
+            três símbolos em linha, coluna ou diagonal.</p>
+        </div>
+      </aside>
+    </main>
+  </div>
+
+  <script>
+    const gameBtns = document.querySelectorAll('.game-btn');
+    const iframe = document.getElementById('gameFrame');
+    const currentTitle = document.getElementById('currentTitle');
+    const fsBtn = document.getElementById('fsBtn');
+    const openNewTab = document.getElementById('openNewTab');
+    const reloadBtn = document.getElementById('reloadBtn');
+    const hideToolbar = document.getElementById('hideToolbar');
+
+    gameBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const src = btn.getAttribute('data-src');
+        loadGame(src);
+      })
+    });
+
+    function loadGame(src) {
+      iframe.src = src;
+      currentTitle.textContent = src;
+    }
+
+    fsBtn.addEventListener('click', async () => {
+      const container = document.querySelector('.player');
+      if (!document.fullscreenElement) {
+        try { await container.requestFullscreen(); }
+        catch (e) { alert('Erro ao entrar em tela cheia: ' + e.message) }
+      } else { document.exitFullscreen(); }
+    });
+
+    openNewTab.addEventListener('click', () => {
+      if (!iframe.src) return alert('Nenhum jogo carregado');
+      window.open(iframe.src, '_blank');
+    });
+
+    reloadBtn.addEventListener('click', () => { iframe.contentWindow.location.reload(); });
+
+    hideToolbar.addEventListener('click', () => {
+      const tb = document.querySelector('.player-toolbar');
+      tb.classList.toggle('hidden');
+    });
+
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'f' || e.key === 'F') fsBtn.click();
+    });
+  </script>
+</body>
+
+
+</html>
