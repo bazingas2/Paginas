@@ -320,14 +320,24 @@
       try {
         state.flat = await crawl('');
 
-        // adiciona manualmente os links externos snack
-        const snackLinks = [
-          { path: "snack/b46abe", name: "Snack 1", size: 0, download_url: "https://snack.expo.dev/@kawanf/b46abe", html_url: "https://snack.expo.dev/@kawanf/b46abe", kind: "snack" },
-          { path: "snack/e1bce5", name: "Snack 2", size: 0, download_url: "https://snack.expo.dev/@kawanf/e1bce5", html_url: "https://snack.expo.dev/@kawanf/e1bce5", kind: "snack" },
-          { path: "snack/c2d492", name: "Snack 3", size: 0, download_url: "https://snack.expo.dev/@kawanf/c2d492", html_url: "https://snack.expo.dev/@kawanf/c2d492", kind: "snack" },
-          { path: "snack/54c8a7", name: "Snack 4", size: 0, download_url: "https://snack.expo.dev/@kawanf/54c8a7", html_url: "https://snack.expo.dev/@kawanf/54c8a7", kind: "snack" },
-        ];
-        state.flat.push(...snackLinks);
+      const snackLinks = [
+  { path: "snack/b46abe", name: "Snack 1", size: 0, download_url: "https://snack.expo.dev/@kawanf/b46abe", html_url: "https://snack.expo.dev/@kawanf/b46abe", kind: "snack" },
+  { path: "snack/e1bce5", name: "Snack 2", size: 0, download_url: "https://snack.expo.dev/@kawanf/e1bce5", html_url: "https://snack.expo.dev/@kawanf/e1bce5", kind: "snack" },
+  { path: "snack/c2d492", name: "Snack 3", size: 0, download_url: "https://snack.expo.dev/@kawanf/c2d492", html_url: "https://snack.expo.dev/@kawanf/c2d492", kind: "snack" },
+  { path: "snack/54c8a7", name: "Snack 4", size: 0, download_url: "https://snack.expo.dev/@kawanf/54c8a7", html_url: "https://snack.expo.dev/@kawanf/54c8a7", kind: "snack" },
+
+  // novos snacks adicionados
+  { path: "snack/f139b8", name: "Snack 5", size: 0, download_url: "https://snack.expo.dev/@kawanf/f139b8", html_url: "https://snack.expo.dev/@kawanf/f139b8", kind: "snack" },
+  { path: "snack/7a3779", name: "Snack 6", size: 0, download_url: "https://snack.expo.dev/@kawanf/7a3779", html_url: "https://snack.expo.dev/@kawanf/7a3779", kind: "snack" },
+  { path: "snack/0e920d", name: "Snack 7", size: 0, download_url: "https://snack.expo.dev/@kawanf/0e920d", html_url: "https://snack.expo.dev/@kawanf/0e920d", kind: "snack" },
+
+  // link do Vercel
+  { path: "vercel/end-thyn", name: "Vercel App", size: 0, download_url: "https://end-thyn.vercel.app/", html_url: "https://end-thyn.vercel.app/", kind: "snack" },
+
+  // link do p5.js
+  { path: "p5js/6--bhKxzF", name: "p5.js Projeto", size: 0, download_url: "https://editor.p5js.org/luz.kawan/full/6--bhKxzF", html_url: "https://editor.p5js.org/luz.kawan/full/6--bhKxzF", kind: "snack" },
+];
+state.flat.push(...snackLinks);
 
         state.tree = buildTree(state.flat);
         render();
