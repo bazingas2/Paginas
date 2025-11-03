@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <title>Jogo da Memória - Placas de Trânsito</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      background: #e6f7ff;
+      margin: 20px;
+    }
+
+    h1 { color: #333; margin-bottom: 6px; }
+
+    #game-board {
+      display: grid;
+      justify-content: center;
+      gap: 10px;
+      margin: 20px auto;
+      max-width: 520px;
+    }
+
+    .card {
+      width: 100px;
+      height: 100px;
+      border: 2px solid #333;
+      border-radius: 10px;
+      background-color: #ffffff;
+      cursor: pointer;
+      background-size: cover;
+      background-position: center;
+      transition: transform 0.15s;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.12);
+      display: inline-block;
+    }
+
+    .card:active { transform: scale(0.98); }
+
+    .back {
+      background-image: linear-gradient(135deg, #7ec8f5 0%, #dff3ff 100%);
+    }
+
+    .matched {
+      opacity: 0.6;
+      cursor: default;
+      pointer-events: none;
+      box-shadow: none;
+      transform: none;
+    }
+
+    #level-info { margin-top: 8px; font-size: 18px; font-weight: bold; }
+
+    button {
+      margin-top: 14px;
+      padding: 10px 18px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 15px;
+    }
+    button:hover { background-color: #0056b3; }
+    #controls { margin-top: 6px; }
+    #message { margin-top: 10px; font-weight: bold; }
+  </style>
+</head>
+<body>
+
+  <h1>🚦 Jogo da Memória - Placas de Trânsito</h1>
+  <div id="level-info">Fase 1</div>
+
+  <div id="game-board"></div>
+
+  <div id="controls">
+    <button id="restart">Reiniciar Fase</button>
+    <button id="next-level" style="display:none;">Próxima Fase ▶️</button>
+  </div>
+
+  <div id="message"></div>
+
+  <script>
+    // Coloque aqui os nomes dos arquivos das imagens exatamente como estão na pasta,
+    // por exemplo: "download.png", "download (1).jfif", "download (2).png", ...
+    // O código usa encodeURI para lidar com espaços/parenteses.
+    const images = [
+      "download.png",
+      "download (1).jfif",
+      "download (2).png",
+      "download (3).png",
+      "download (4).png",
+      "download (5).png",
+      "download (1).png",
+      "download.jfif"
+    ];
+
+    let level = 1; // 1, 2 ou 3
+    const maxLevel = 3;
+    const board = document.getElementById("game-board");
+    const levelInfo = document.getElementById("level-info");
+    const nextBtn = document.getElementById("next-level");
+    const restartBtn = document.getElementById("restart");
+    const message = document.getElementById("message");
+
+    let cardsChosen = []; // cartas viradas atualmente
+    let matchedCount = 0;
+
+    function startGame() {
+      cardsChosen = [];
+      matchedCount = 0;
+      message.textContent = "";
+      nextBtn.style.display = "none";
+
+      // número de pares por fase: fase1 -> 2 pares, fase2 -> 4 pares, fase3 -> 6 pares
+      let numPairs = level * 2;
+      // proteja caso não tenha imagens suficientes:
+      if (numPairs > images.length) numPairs = images.length;
+
+      const selectedImages = images.slice(0, numPairs);
+      const gameImages = [...selectedImages, ...selectedImages]
+        .sort(() => Math.random() - 0.5);
+
+      // colunas = ceil(sqrt(totalCards)) -> sempre inteiro
+      const totalCards = gameImages.length;
+      const cols = Math.ceil(Math.sqrt(totalCards));
+      board.style.gridTemplateColumns = `repeat(${cols}, 100px)`;
+
+      board.innerHTML = "";
+      gameImages.forEach(src => {
+        const div = document.createElement("div");
+        div.className = "card back";
+        // armazenar o nome original no dataset
+        div.dataset.image = src;
+        // inicialmente sem imagem (verso)
+        div.style.backgroundImage = "";
+        div.addEventListener("click", onCardClick);
+        board.appendChild(div);
+      });
+
+      levelInfo.innerText = `Fase ${level}`;
+    }
+
+    function onCardClick(e) {
+      const card = e.currentTarget;
+
+      // se já tem 2 cartas escolhidas, ignore cliques
+      if (cardsChosen.length >= 2) return;
+      // impedir clicar numa carta já casada ou já virada
+      if (card.classList.contains("matched") || card.classList.contains("flipped")) return;
+
+      // prevenir clicar duas vezes na mesma carta (selecionar o mesmo elemento duas vezes)
+      if (cardsChosen.length === 1 && cardsChosen[0] === card) return;
+
+      // virar a carta
+      const img = encodeURI(card.dataset.image);
+      card.style.backgroundImage = `url("${img}")`;
+      card.classList.remove("back");
+      card.classList.add("flipped");
+      cardsChosen.push(card);
+
+      // se duas cartas viradas, checar correspondência
+      if (cardsChosen.length === 2) {
+        // pequeno atraso para que a criança veja as duas imagens
+        setTimeout(checkMatch, 700);
+      }
+    }
+
+    function checkMatch() {
+      const [first, second] = cardsChosen;
+      if (!first || !second) {
+        cardsChosen = [];
+        return;
+      }
+
+      if (first.dataset.image === second.dataset.image) {
+        // encontrou par
+        first.classList.add("matched");
+        second.classList.add("matched");
+        // remover listeners para evitar cliques futuros
+        first.removeEventListener("click", onCardClick);
+        second.removeEventListener("click", onCardClick);
+        matchedCount += 2;
+      } else {
+        // virar de volta (verso)
+        first.style.backgroundImage = "";
+        second.style.backgroundImage = "";
+        first.classList.remove("flipped");
+        second.classList.remove("flipped");
+        first.classList.add("back");
+        second.classList.add("back");
+      }
+
+      cardsChosen = [];
+
+      const totalCards = document.querySelectorAll(".card").length;
+      if (matchedCount === totalCards) {
+        if (level < maxLevel) {
+          message.textContent = "Parabéns! Você concluiu a fase. Clique em 'Próxima Fase'.";
+          nextBtn.style.display = "inline-block";
+        } else {
+          message.textContent = "🎉 Parabéns! Você concluiu todas as fases!";
+        }
+      }
+    }
+
+    nextBtn.addEventListener("click", () => {
+      if (level < maxLevel) {
+        level++;
+        startGame();
+      }
+    });
+
+    restartBtn.addEventListener("click", () => {
+      startGame();
+    });
+
+    // iniciar primeira fase
+    startGame();
+
+  </script>
+</body>
+</html>
