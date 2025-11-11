@@ -1,0 +1,260 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Meu Acervo — Colecionador</title>
+  <style>
+    :root {
+      --bg: #f8f9fb;
+      --fg: #111827;
+      --accent: #2563eb;
+      --card: #ffffff;
+      --border: #e5e7eb;
+      --muted: #6b7280;
+    }
+    * {
+      box-sizing: border-box;
+      font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--fg);
+      min-height: 100vh;
+    }
+    header {
+      background: var(--card);
+      border-bottom: 1px solid var(--border);
+      padding: 16px 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    header h1 {
+      font-size: 20px;
+      margin: 0;
+    }
+    .btn {
+      background: var(--accent);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      padding: 8px 14px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: background 0.2s;
+    }
+    .btn:hover {
+      background: #1d4ed8;
+    }
+    .btn.secondary {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--fg);
+    }
+    .container {
+      display: grid;
+      grid-template-columns: 340px 1fr;
+      gap: 24px;
+      padding: 24px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    aside, main {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.04);
+    }
+    label {
+      display: block;
+      margin-bottom: 6px;
+      font-weight: 500;
+      font-size: 14px;
+    }
+    input[type=text], textarea, select {
+      width: 100%;
+      padding: 8px 10px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      margin-bottom: 12px;
+      font-size: 14px;
+      color: var(--fg);
+    }
+    textarea { min-height: 80px; }
+    .upload-drop {
+      border: 2px dashed var(--border);
+      border-radius: 8px;
+      padding: 20px;
+      text-align: center;
+      color: var(--muted);
+      margin-bottom: 10px;
+      cursor: pointer;
+    }
+    .preview img {
+      width: 80px;
+      height: 80px;
+      object-fit: cover;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      margin: 4px;
+    }
+    .list-toolbar {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+    .list-toolbar input, .list-toolbar select {
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 8px 10px;
+      font-size: 14px;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 16px;
+    }
+    .card-item {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: var(--card);
+      overflow: hidden;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+      display: flex;
+      flex-direction: column;
+    }
+    .card-item img {
+      width: 100%;
+      height: 160px;
+      object-fit: cover;
+    }
+    .card-item .info {
+      padding: 12px;
+      flex: 1;
+    }
+    .card-item h3 {
+      margin: 0 0 4px;
+      font-size: 15px;
+    }
+    .card-item p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 13px;
+    }
+    .card-actions {
+      display: flex;
+      gap: 6px;
+      padding: 10px 12px;
+      border-top: 1px solid var(--border);
+    }
+    footer {
+      text-align: center;
+      color: var(--muted);
+      font-size: 13px;
+      padding: 20px 0;
+    }
+    @media(max-width:900px){
+      .container { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Meu Acervo</h1>
+    <div style="display:flex; gap:8px;">
+      <button class="btn secondary" id="importBtn">Importar</button>
+      <button class="btn secondary" id="exportBtn">Exportar</button>
+      <button class="btn" id="clearAll">Limpar</button>
+    </div>
+  </header>
+
+  <div class="container">
+    <aside>
+      <form id="itemForm">
+        <label>Título</label>
+        <input id="title" required type="text" placeholder="Ex: Miniatura Ferrari F40" />
+
+        <label>Categoria</label>
+        <select id="category">
+          <option>Livros</option>
+          <option>Revistas</option>
+          <option>Carros de Corrida</option>
+          <option>Antiguidades</option>
+          <option>Outros</option>
+        </select>
+
+        <label>Descrição</label>
+        <textarea id="description" placeholder="Notas sobre o item"></textarea>
+
+        <label>Imagens</label>
+        <div id="drop" class="upload-drop">Clique ou solte imagens aqui<input id="fileInput" type="file" multiple accept="image/*" style="display:none"></div>
+        <div id="preview" class="preview"></div>
+
+        <input type="hidden" id="editingId" />
+        <button type="submit" class="btn" style="width:100%; margin-top:10px;">Salvar</button>
+      </form>
+    </aside>
+
+    <main>
+      <div class="list-toolbar">
+        <input id="search" placeholder="Pesquisar..." style="flex:1;" />
+        <select id="sort">
+          <option value="new">Mais recentes</option>
+          <option value="title">A–Z</option>
+        </select>
+        <select id="quickFilter">
+          <option value="">Todos</option>
+          <option>Livros</option>
+          <option>Revistas</option>
+          <option>Carros</option>
+          <option>Antiguidades</option>
+        </select>
+      </div>
+      <div id="grid" class="grid"></div>
+    </main>
+  </div>
+  <footer>Os dados são armazenados localmente no navegador.</footer>
+
+  <script>
+    const STORAGE_KEY='colecao_items_v1';
+    let items=[]; const $=s=>document.querySelector(s);
+    function save(){localStorage.setItem(STORAGE_KEY,JSON.stringify(items));}
+    function load(){try{items=JSON.parse(localStorage.getItem(STORAGE_KEY))||[]}catch{items=[]}}
+    function render(){
+      const q=$('#search').value.toLowerCase();
+      const filter=$('#quickFilter').value;
+      let list=items.filter(i=>i.title.toLowerCase().includes(q)||i.description.toLowerCase().includes(q));
+      if(filter) list=list.filter(i=>i.category===filter);
+      if($('#sort').value==='title') list.sort((a,b)=>a.title.localeCompare(b.title)); else list.sort((a,b)=>b.created-a.created);
+      const grid=$('#grid'); grid.innerHTML='';
+      if(!list.length){grid.innerHTML='<p style="color:var(--muted)">Nenhum item encontrado.</p>';return;}
+      list.forEach(i=>{
+        const card=document.createElement('div'); card.className='card-item';
+        card.innerHTML=`<img src="${i.images[0]||'https://via.placeholder.com/400x300?text=Sem+Imagem'}"><div class='info'><h3>${i.title}</h3><p>${i.category}</p></div><div class='card-actions'><button class='btn secondary small' onclick="editItem('${i.id}')">Editar</button><button class='btn secondary small' onclick="delItem('${i.id}')">Excluir</button></div>`;
+        grid.appendChild(card);
+      });
+    }
+    function delItem(id){if(confirm('Excluir item?')){items=items.filter(i=>i.id!==id);save();render();}}
+    function editItem(id){const it=items.find(x=>x.id===id);if(!it)return;$('#title').value=it.title;$('#category').value=it.category;$('#description').value=it.description;currentImages=it.images;$('#editingId').value=id;renderPreview();window.scrollTo({top:0,behavior:'smooth'});}
+
+    let currentImages=[]; function renderPreview(){const p=$('#preview');p.innerHTML='';currentImages.forEach((src,i)=>{const img=document.createElement('img');img.src=src;img.onclick=()=>{if(confirm('Remover imagem?')){currentImages.splice(i,1);renderPreview();}};p.appendChild(img);});}
+    $('#drop').onclick=()=>$('#fileInput').click(); $('#fileInput').onchange=e=>handleFiles(e.target.files);
+    function handleFiles(files){[...files].forEach(f=>{const r=new FileReader();r.onload=()=>{currentImages.push(r.result);renderPreview();};r.readAsDataURL(f);});}
+
+    $('#itemForm').onsubmit=e=>{e.preventDefault();const data={id:$('#editingId').value||Date.now().toString(),title:$('#title').value.trim(),category:$('#category').value,description:$('#description').value.trim(),images:currentImages,created:Date.now()};
+      if($('#editingId').value){const idx=items.findIndex(i=>i.id===data.id);items[idx]=data;}else{items.push(data);}save();render();e.target.reset();currentImages=[];renderPreview();$('#editingId').value='';}
+
+    $('#search').oninput=render;$('#sort').onchange=render;$('#quickFilter').onchange=render;
+
+    $('#clearAll').onclick=()=>{if(confirm('Excluir todos os itens?')){items=[];save();render();}};
+
+    $('#exportBtn').onclick=()=>{const blob=new Blob([JSON.stringify(items,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='acervo.json';a.click();}
+    $('#importBtn').onclick=()=>{const inp=document.createElement('input');inp.type='file';inp.accept='application/json';inp.onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{items=JSON.parse(r.result)||[];save();render();}catch{alert('Erro no arquivo')}};r.readAsText(f);};inp.click();}
+
+    load();render();
+  </script>
+</body>
+</html>
